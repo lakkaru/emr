@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Container, TextField, Button, Typography, Box } from '@mui/material';
+import { Container, TextField, Button, Typography, Box, Link } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../utils/api';
 
@@ -9,6 +9,12 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [hasUsers, setHasUsers] = React.useState(true);
+
+  React.useEffect(() => {
+    const api = apiClient();
+    api.get('/auth/has-users').then(r => setHasUsers(r.hasUsers)).catch(()=>setHasUsers(true));
+  }, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -35,6 +41,11 @@ export default function LoginPage() {
         {error && <Typography color="error" variant="body2">{error}</Typography>}
         <Button variant="contained" type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</Button>
       </Box>
+      {!hasUsers && (
+        <Typography variant="body2" sx={{ mt: 2 }}>
+          No users yet? <Link href="/setup">Create the first admin</Link>
+        </Typography>
+      )}
     </Container>
   );
 }

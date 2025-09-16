@@ -3,12 +3,36 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { registerSchema, loginSchema } = require('../validators');
+const { authRequired, requireRole } = require('../middleware/auth');
+
+// First-user check: open registration only if no users exist; afterwards admin-only
+router.get('/has-users', async (req, res, next) => {
+  try {
+    const count = await User.estimatedDocumentCount();
+    res.json({ hasUsers: count > 0 });
+  } catch (e) { next(e); }
+});
 
 router.post('/register', async (req, res, next) => {
   try {
     const value = await registerSchema.validateAsync(req.body, { abortEarly: false });
     const existing = await User.findOne({ email: value.email });
     if (existing) return res.status(409).json({ error: 'Email already in use' });
+    const count = await User.estimatedDocumentCount();
+    if (count > 0) {
+      // require admin auth for subsequent registrations
+      try {
+        const header = req.headers.authorization || '';
+        const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+        const jwt = require('jsonwebtoken');
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        if (!payload || payload.role !== 'admin') {
+          return res.status(403).json({ error: 'Admin required' });
+        }
+      } catch {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+    }
     const passwordHash = await bcrypt.hash(value.password, 12);
     const user = await User.create({ email: value.email, name: value.name, role: value.role, passwordHash });
     return res.status(201).json({ id: user._id, email: user.email, name: user.name, role: user.role });
