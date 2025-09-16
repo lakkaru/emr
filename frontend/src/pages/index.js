@@ -1,127 +1,266 @@
-import * as React from "react"
-import { Link } from "gatsby"
-import { StaticImage } from "gatsby-plugin-image"
+import * as React from 'react';
+import { navigate } from 'gatsby';
+import {
+  AppBar, Toolbar, Typography, Box, Card, CardContent, CardActions, Button, 
+  Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Grid,
+  Chip, Avatar, Stack, Divider, useTheme, useMediaQuery
+} from '@mui/material';
+import {
+  Menu as MenuIcon, Person as PersonIcon, PersonAdd as PersonAddIcon,
+  Dashboard as DashboardIcon, Assignment as AssignmentIcon, Security as SecurityIcon,
+  ExitToApp as LogoutIcon, LocalHospital as HospitalIcon, 
+  Assessment as AssessmentIcon, Groups as GroupsIcon
+} from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
 
-import Layout from "../components/layout"
-import Seo from "../components/seo"
-import * as styles from "../components/index.module.css"
+const drawerWidth = 240;
 
-const links = [
-  {
-    text: "Tutorial",
-    url: "https://www.gatsbyjs.com/docs/tutorial",
-    description:
-      "A great place to get started if you're new to web development. Designed to guide you through setting up your first Gatsby site.",
-  },
-  {
-    text: "Examples",
-    url: "https://github.com/gatsbyjs/gatsby/tree/master/examples",
-    description:
-      "A collection of websites ranging from very basic to complex/complete that illustrate how to accomplish specific tasks within your Gatsby sites.",
-  },
-  {
-    text: "Plugin Library",
-    url: "https://www.gatsbyjs.com/plugins",
-    description:
-      "Learn how to add functionality and customize your Gatsby site or app with thousands of plugins built by our amazing developer community.",
-  },
-  {
-    text: "Build and Host",
-    url: "https://www.gatsbyjs.com/cloud",
-    description:
-      "Now you’re ready to show the world! Give your Gatsby site superpowers: Build and host on Gatsby Cloud. Get started for free!",
-  },
-]
+export default function IndexPage() {
+  const { user, token, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-const samplePageLinks = [
-  {
-    text: "Page 2",
-    url: "page-2",
-    badge: false,
-    description:
-      "A simple example of linking to another page within a Gatsby site",
-  },
-  { text: "TypeScript", url: "using-typescript" },
-  { text: "Server Side Rendering", url: "using-ssr" },
-  { text: "Deferred Static Generation", url: "using-dsg" },
-]
+  const go = (path) => () => navigate(path);
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
-const moreLinks = [
-  {
-    text: "Documentation",
-    url: "https://gatsbyjs.com/docs/",
-  },
-  {
-    text: "Starters",
-    url: "https://gatsbyjs.com/starters/",
-  },
-  {
-    text: "Showcase",
-    url: "https://gatsbyjs.com/showcase/",
-  },
-  {
-    text: "Contributing",
-    url: "https://www.gatsbyjs.com/contributing/",
-  },
-  { text: "Issues", url: "https://github.com/gatsbyjs/gatsby/issues" },
-]
+  // Unauthenticated welcome screen
+  if (!token) {
+    return (
+      <Box sx={{ 
+        minHeight: '100vh', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <Card sx={{ maxWidth: 400, p: 3, textAlign: 'center' }}>
+          <HospitalIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
+          <Typography variant="h4" gutterBottom color="primary">
+            EMR System
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+            Electronic Medical Records - HIPAA Compliant Patient Registration & Management
+          </Typography>
+          <Stack spacing={2}>
+            <Button variant="contained" size="large" onClick={go('/login')}>
+              Sign In
+            </Button>
+            <Button variant="outlined" onClick={go('/setup')}>
+              First-time Setup
+            </Button>
+          </Stack>
+        </Card>
+      </Box>
+    );
+  }
 
-const utmParameters = `?utm_source=starter&utm_medium=start-page&utm_campaign=default-starter`
+  // Navigation items based on role
+  const navItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin', 'doctor', 'nurse', 'clerk'] },
+    { text: 'Patient Registration', icon: <PersonAddIcon />, path: '/register', roles: ['admin', 'doctor', 'nurse', 'clerk'] },
+    { text: 'Manage Patients', icon: <GroupsIcon />, path: '/admin/patients', roles: ['admin'] },
+    { text: 'Audit Logs', icon: <AssessmentIcon />, path: '/admin/audits', roles: ['admin'] },
+  ];
 
-const IndexPage = () => (
-  <Layout>
-    <div className={styles.textCenter}>
-      <StaticImage
-        src="../images/example.png"
-        loading="eager"
-        width={64}
-        quality={95}
-        formats={["auto", "webp", "avif"]}
-        alt=""
-        style={{ marginBottom: `var(--space-3)` }}
-      />
-      <h1>
-        Welcome to <b>Gatsby!</b>
-      </h1>
-      <p className={styles.intro}>
-        <b>Example pages:</b>{" "}
-        {samplePageLinks.map((link, i) => (
-          <React.Fragment key={link.url}>
-            <Link to={link.url}>{link.text}</Link>
-            {i !== samplePageLinks.length - 1 && <> · </>}
-          </React.Fragment>
+  const userNavItems = navItems.filter(item => item.roles.includes(user?.role || ''));
+
+  // Dashboard cards based on role
+  const getDashboardCards = () => {
+    const cards = [
+      {
+        title: 'Patient Registration',
+        description: 'Register new patients with comprehensive intake forms',
+        icon: <PersonAddIcon />,
+        action: 'Register Patient',
+        path: '/register',
+        color: 'primary',
+        roles: ['admin', 'doctor', 'nurse', 'clerk']
+      }
+    ];
+
+    if (user?.role === 'admin') {
+      cards.push(
+        {
+          title: 'Patient Management',
+          description: 'View and edit existing patient records',
+          icon: <GroupsIcon />,
+          action: 'Manage Patients',
+          path: '/admin/patients',
+          color: 'secondary',
+          roles: ['admin']
+        },
+        {
+          title: 'System Audit',
+          description: 'Review system activity and compliance logs',
+          icon: <AssessmentIcon />,
+          action: 'View Audits',
+          path: '/admin/audits',
+          color: 'warning',
+          roles: ['admin']
+        }
+      );
+    }
+
+    return cards.filter(card => card.roles.includes(user?.role || ''));
+  };
+
+  const drawer = (
+    <Box>
+      <Toolbar>
+        <HospitalIcon sx={{ mr: 1 }} />
+        <Typography variant="h6">EMR System</Typography>
+      </Toolbar>
+      <Divider />
+      <List>
+        {userNavItems.map((item) => (
+          <ListItem button key={item.text} onClick={go(item.path)}>
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItem>
         ))}
-        <br />
-        Edit <code>src/pages/index.js</code> to update this page.
-      </p>
-    </div>
-    <ul className={styles.list}>
-      {links.map(link => (
-        <li key={link.url} className={styles.listItem}>
-          <a
-            className={styles.listItemLink}
-            href={`${link.url}${utmParameters}`}
+        <Divider sx={{ my: 1 }} />
+        <ListItem button onClick={logout}>
+          <ListItemIcon><LogoutIcon /></ListItemIcon>
+          <ListItemText primary="Sign Out" />
+        </ListItem>
+      </List>
+    </Box>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      {/* App Bar */}
+      <AppBar position="fixed" sx={{ width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` } }}>
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: 'none' } }}
           >
-            {link.text} ↗
-          </a>
-          <p className={styles.listItemDescription}>{link.description}</p>
-        </li>
-      ))}
-    </ul>
-    {moreLinks.map((link, i) => (
-      <React.Fragment key={link.url}>
-        <a href={`${link.url}${utmParameters}`}>{link.text}</a>
-        {i !== moreLinks.length - 1 && <> · </>}
-      </React.Fragment>
-    ))}
-  </Layout>
-)
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            Dashboard
+          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Chip 
+              icon={<SecurityIcon />} 
+              label={user?.role?.toUpperCase()} 
+              color="secondary" 
+              variant="outlined" 
+            />
+            <Avatar sx={{ bgcolor: 'secondary.main' }}>
+              {user?.name?.charAt(0)}
+            </Avatar>
+          </Stack>
+        </Toolbar>
+      </AppBar>
 
-/**
- * Head export to define metadata for the page
- *
- * See: https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-head/
- */
-export const Head = () => <Seo title="Home" />
+      {/* Navigation Drawer */}
+      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+        <Drawer
+          variant={isMobile ? 'temporary' : 'permanent'}
+          open={isMobile ? mobileOpen : true}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+        >
+          {drawer}
+        </Drawer>
+      </Box>
 
-export default IndexPage
+      {/* Main Content */}
+      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` } }}>
+        <Toolbar />
+        
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" gutterBottom>
+            Welcome back, {user?.name}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Electronic Medical Records System - Streamline patient care with efficient documentation
+          </Typography>
+        </Box>
+
+        <Grid container spacing={3}>
+          {getDashboardCards().map((card, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Avatar sx={{ bgcolor: `${card.color}.main`, mr: 2 }}>
+                      {card.icon}
+                    </Avatar>
+                    <Typography variant="h6" component="h2">
+                      {card.title}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {card.description}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button 
+                    size="small" 
+                    color={card.color} 
+                    variant="contained"
+                    onClick={go(card.path)}
+                    fullWidth
+                  >
+                    {card.action}
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Quick Stats or Info Section */}
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            System Features
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined">
+                <CardContent sx={{ textAlign: 'center' }}>
+                  <SecurityIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                  <Typography variant="subtitle2">HIPAA Compliant</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined">
+                <CardContent sx={{ textAlign: 'center' }}>
+                  <AssignmentIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                  <Typography variant="subtitle2">Audit Trails</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined">
+                <CardContent sx={{ textAlign: 'center' }}>
+                  <PersonIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                  <Typography variant="subtitle2">Role-Based Access</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined">
+                <CardContent sx={{ textAlign: 'center' }}>
+                  <HospitalIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                  <Typography variant="subtitle2">Mobile-First</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
