@@ -4,12 +4,12 @@
  * See: https://www.gatsbyjs.com/docs/reference/config-files/gatsby-browser/
  */
 
-import React from 'react';
-import { AuthProvider } from './src/context/AuthContext';
-import AppProviders from './src/components/AppProviders';
+const React = require('react');
+const { AuthProvider } = require('./src/context/AuthContext');
+const AppProviders = require('./src/components/AppProviders').default;
 
-export const wrapRootElement = ({ element }) => (
-	<AuthProvider>
-		<AppProviders>{element}</AppProviders>
-	</AuthProvider>
-);
+exports.wrapRootElement = ({ element }) => {
+	return React.createElement(AuthProvider, null,
+		React.createElement(AppProviders, null, element)
+	);
+};

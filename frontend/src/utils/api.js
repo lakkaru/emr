@@ -10,5 +10,9 @@ export function apiClient(token) {
     }
     return res.json();
   }
-  return { get: (p) => request(p), post: (p, body) => request(p, { method: 'POST', body: JSON.stringify(body) }) };
+  return {
+    get: (p) => request(p),
+    post: (p, body) => request(p, { method: 'POST', body: JSON.stringify(body) }),
+    put: (p, body) => request(p, { method: 'PUT', body: JSON.stringify(body) })
+  };
 }

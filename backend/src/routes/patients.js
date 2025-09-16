@@ -55,4 +55,28 @@ router.post('/check-duplicate', requireRole(['admin', 'doctor', 'nurse', 'clerk'
   } catch (e) { next(e); }
 });
 
+// Read single patient
+router.get('/:id', requireRole(['admin', 'doctor', 'nurse', 'clerk']), async (req, res, next) => {
+  try {
+    const p = await Patient.findById(req.params.id);
+    if (!p) return res.status(404).json({ error: 'Not found' });
+    res.json(p);
+  } catch (e) { next(e); }
+});
+
+// Update patient
+router.put('/:id', requireRole(['admin']), async (req, res, next) => {
+  try {
+    const value = await patientSchema.validateAsync(req.body, { abortEarly: false });
+    value.dedupeKey = buildDedupeKey(value);
+    const updated = await Patient.findByIdAndUpdate(req.params.id, value, { new: true });
+    if (!updated) return res.status(404).json({ error: 'Not found' });
+    await audit('update', 'Patient', updated._id.toString(), req, { fields: ['fullName', 'dob', 'phone'] });
+    res.json(updated);
+  } catch (e) {
+    if (e.isJoi) return res.status(400).json({ error: e.message });
+    next(e);
+  }
+});
+
 module.exports = router;

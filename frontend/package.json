@@ -5,10 +5,13 @@
   "version": "0.1.0",
   "author": "Kyle Mathews <mathews.kyle@gmail.com>",
   "dependencies": {
-  "gatsby": "^5.14.6",
-  "@mui/material": "^5.15.14",
-  "@emotion/react": "^11.11.4",
-  "@emotion/styled": "^11.11.5",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.15.14",
+    "@mui/x-date-pickers": "^6.20.2",
+    "dayjs": "^1.11.18",
+    "gatsby": "^5.14.6",
     "gatsby-plugin-image": "^3.14.0",
     "gatsby-plugin-manifest": "^5.14.0",
     "gatsby-plugin-sharp": "^5.14.0",
@@ -34,7 +37,9 @@
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
   },
   "proxy": "http://localhost:4000",
-  "engines": { "node": ">=18.0.0" },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/gatsbyjs/gatsby-starter-default"

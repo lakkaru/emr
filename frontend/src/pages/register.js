@@ -1,18 +1,22 @@
 import * as React from 'react';
-import { Container, TextField, Button, Typography, Box, Grid, Alert, Chip, Stack } from '@mui/material';
+import { Container, TextField, Button, Typography, Box, Grid, Alert, Chip, Stack, IconButton } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../utils/api';
 
 export default function RegisterPage() {
   const { token } = useAuth();
   const api = React.useMemo(() => apiClient(token), [token]);
-  const [form, setForm] = React.useState({
+  const initialForm = {
     fullName: '', nickname: '', dob: '', gender: '', address: '', phone: '', email: '',
     insurance: { provider: '', memberId: '', groupNumber: '' },
     referral: { source: '', contact: '' },
     allergies: [], medications: [], pastMedicalHistory: '', problemList: [], immunizations: [],
     vitalsAtCheckIn: { temperatureC: '', bloodPressure: '', respiratoryRate: '', pulse: '' }
-  });
+  };
+  const [form, setForm] = React.useState(initialForm);
   const [error, setError] = React.useState('');
   const [success, setSuccess] = React.useState('');
   const [duplicate, setDuplicate] = React.useState(null);
@@ -42,7 +46,8 @@ export default function RegisterPage() {
       if (!token) throw new Error('Please login');
       const created = await api.post('/patients', payload);
       setSuccess('Patient created');
-      setForm((f) => ({ ...f, fullName: '', nickname: '', dob: '', gender: '', address: '', phone: '', email: '' }));
+      setForm(initialForm);
+      setDuplicate(null);
     } catch (e) {
       setError(e.message);
     }
@@ -55,7 +60,14 @@ export default function RegisterPage() {
         <TextField label="Full name" value={form.fullName} onChange={onChange('fullName')} required fullWidth />
         <TextField label="Nickname (optional)" value={form.nickname} onChange={onChange('nickname')} fullWidth />
         <Grid container spacing={2}>
-          <Grid item xs={6}><TextField label="Date of Birth" type="date" InputLabelProps={{ shrink: true }} value={form.dob} onChange={onChange('dob')} required fullWidth /></Grid>
+          <Grid item xs={6}>
+            <DatePicker
+              label="Date of Birth"
+              value={form.dob || null}
+              onChange={(val)=> setForm(f=>({...f, dob: val ? val.format('YYYY-MM-DD') : ''}))}
+              slotProps={{ textField: { fullWidth: true, required: true }}}
+            />
+          </Grid>
           <Grid item xs={6}><TextField label="Gender" value={form.gender} onChange={onChange('gender')} fullWidth /></Grid>
         </Grid>
         <TextField label="Address" value={form.address} onChange={onChange('address')} fullWidth />
@@ -88,6 +100,32 @@ export default function RegisterPage() {
         {duplicate && (
           <Alert severity="warning">Possible duplicate: {duplicate.fullName} ({new Date(duplicate.dob).toLocaleDateString()})</Alert>
         )}
+
+        <Typography variant="subtitle1">Allergies</Typography>
+        <Stack spacing={1}>
+          {form.allergies.map((a, idx) => (
+            <Grid container spacing={1} alignItems="center" key={idx}>
+              <Grid item xs={5}><TextField label="Substance" value={a.substance} onChange={(e)=>setForm(f=>{ const arr=[...f.allergies]; arr[idx]={...arr[idx], substance:e.target.value}; return {...f, allergies:arr}; })} fullWidth /></Grid>
+              <Grid item xs={4}><TextField label="Reaction" value={a.reaction||''} onChange={(e)=>setForm(f=>{ const arr=[...f.allergies]; arr[idx]={...arr[idx], reaction:e.target.value}; return {...f, allergies:arr}; })} fullWidth /></Grid>
+              <Grid item xs={2}><TextField label="Severity" value={a.severity||''} onChange={(e)=>setForm(f=>{ const arr=[...f.allergies]; arr[idx]={...arr[idx], severity:e.target.value}; return {...f, allergies:arr}; })} fullWidth /></Grid>
+              <Grid item xs={1}><IconButton aria-label="remove allergy" onClick={()=>setForm(f=>({...f, allergies: f.allergies.filter((_,i)=>i!==idx)}))}><DeleteIcon /></IconButton></Grid>
+            </Grid>
+          ))}
+          <Button size="small" startIcon={<AddIcon/>} onClick={()=>setForm(f=>({...f, allergies:[...f.allergies, { substance:'' }]}))}>Add allergy</Button>
+        </Stack>
+
+        <Typography variant="subtitle1" sx={{ mt: 2 }}>Medications</Typography>
+        <Stack spacing={1}>
+          {form.medications.map((m, idx) => (
+            <Grid container spacing={1} alignItems="center" key={idx}>
+              <Grid item xs={5}><TextField label="Name" value={m.name} onChange={(e)=>setForm(f=>{ const arr=[...f.medications]; arr[idx]={...arr[idx], name:e.target.value}; return {...f, medications:arr}; })} fullWidth /></Grid>
+              <Grid item xs={3}><TextField label="Dosage" value={m.dosage||''} onChange={(e)=>setForm(f=>{ const arr=[...f.medications]; arr[idx]={...arr[idx], dosage:e.target.value}; return {...f, medications:arr}; })} fullWidth /></Grid>
+              <Grid item xs={3}><TextField label="Frequency" value={m.frequency||''} onChange={(e)=>setForm(f=>{ const arr=[...f.medications]; arr[idx]={...arr[idx], frequency:e.target.value}; return {...f, medications:arr}; })} fullWidth /></Grid>
+              <Grid item xs={1}><IconButton aria-label="remove medication" onClick={()=>setForm(f=>({...f, medications: f.medications.filter((_,i)=>i!==idx)}))}><DeleteIcon /></IconButton></Grid>
+            </Grid>
+          ))}
+          <Button size="small" startIcon={<AddIcon/>} onClick={()=>setForm(f=>({...f, medications:[...f.medications, { name:'' }]}))}>Add medication</Button>
+        </Stack>
 
         {error && <Alert severity="error">{error}</Alert>}
         {success && <Alert severity="success">{success}</Alert>}
