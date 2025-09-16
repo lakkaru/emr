@@ -6,12 +6,26 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [idleTimer, setIdleTimer] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = window.localStorage.getItem('auth_token');
-    const u = window.localStorage.getItem('auth_user');
-    if (t) setToken(t);
-    if (u) setUser(JSON.parse(u));
+    try {
+      const t = window.localStorage.getItem('auth_token');
+      const u = window.localStorage.getItem('auth_user');
+      if (t) setToken(t);
+      if (u) {
+        try {
+          setUser(JSON.parse(u));
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+          window.localStorage.removeItem('auth_user');
+        }
+      }
+    } catch (e) {
+      console.error('Error loading auth data:', e);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = (t, u) => {
@@ -47,7 +61,7 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const value = useMemo(() => ({ token, user, login, logout }), [token, user]);
+  const value = useMemo(() => ({ token, user, login, logout, isLoading }), [token, user, isLoading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

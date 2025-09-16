@@ -12,6 +12,7 @@ import {
   Assessment as AssessmentIcon, Groups as GroupsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import Navigation from '../components/Navigation';
 
 const drawerWidth = 240;
 
@@ -129,60 +130,18 @@ export default function IndexPage() {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      {/* App Bar */}
-      <AppBar position="fixed" sx={{ width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` } }}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Dashboard
-          </Typography>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Chip 
-              icon={<SecurityIcon />} 
-              label={user?.role?.toUpperCase()} 
-              color="secondary" 
-              variant="outlined" 
-            />
-            <Avatar sx={{ bgcolor: 'secondary.main' }}>
-              {user?.name?.charAt(0)}
-            </Avatar>
-          </Stack>
-        </Toolbar>
-      </AppBar>
+    <Navigation title="Dashboard" currentPath="/"  >
 
-      {/* Navigation Drawer */}
-      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-        <Drawer
-          variant={isMobile ? 'temporary' : 'permanent'}
-          open={isMobile ? mobileOpen : true}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-
-      {/* Main Content */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` } }}>
-        <Toolbar />
-        
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
+      <Box sx={{ 
+        minHeight: '100vh', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        p: 4
+      }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h3" gutterBottom sx={{ color: 'white', fontWeight: 'bold' }}>
             Welcome back, {user?.name}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)' }}>
             Electronic Medical Records System - Streamline patient care with efficient documentation
           </Typography>
         </Box>
@@ -261,6 +220,6 @@ export default function IndexPage() {
           </Grid>
         </Box>
       </Box>
-    </Box>
+    </Navigation>
   );
 }

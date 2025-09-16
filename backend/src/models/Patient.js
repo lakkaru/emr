@@ -26,7 +26,10 @@ const PatientSchema = new mongoose.Schema({
   dob: { type: Date, required: true, index: true },
   gender: String,
   address: String,
-  phone: { type: String, required: true, index: true },
+  phones: [{ 
+    type: { type: String, enum: ['mobile', 'home', 'work'], default: 'mobile' },
+    number: { type: String, required: true }
+  }],
   email: { type: String },
   // II. Administrative
   insurance: {

@@ -10,6 +10,8 @@ const { connectDB } = require('./utils/db');
 const authRoutes = require('./routes/auth');
 const patientRoutes = require('./routes/patients');
 const auditRoutes = require('./routes/audits');
+const allergyRoutes = require('./routes/allergies');
+const medicationRoutes = require('./routes/medications');
 
 const app = express();
 
@@ -47,6 +49,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/audits', auditRoutes);
+app.use('/api/allergies', allergyRoutes);
+app.use('/api/medications', medicationRoutes);
 
 // Error handler (generic; avoid leaking details)
 // eslint-disable-next-line no-unused-vars

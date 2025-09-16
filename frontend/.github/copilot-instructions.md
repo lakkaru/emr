@@ -27,3 +27,5 @@
   ```js
   /** @jsxImportSource @emotion/react */
   import { css } from '@emotion/react';
+## color palette
+3177bf, 0b2c74, 8196a8, 211e25, 8dc4e4 in hex

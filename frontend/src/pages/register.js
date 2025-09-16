@@ -1,16 +1,34 @@
 import * as React from 'react';
-import { Container, TextField, Button, Typography, Box, Grid, Alert, Chip, Stack, IconButton } from '@mui/material';
+import { 
+  Container, TextField, Button, Typography, Box, Grid, Alert, Chip, Stack, IconButton,
+  Card, CardContent, CardHeader, Divider, Paper, Avatar, Stepper, Step, StepLabel,
+  Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions
+} from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
+import { 
+  Delete as DeleteIcon, 
+  Add as AddIcon, 
+  PersonAdd as PersonAddIcon,
+  LocalHospital as HospitalIcon,
+  ExpandMore as ExpandMoreIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckIcon,
+  Healing as MedicalIcon,
+  Security as InsuranceIcon,
+  MonitorHeart as VitalsIcon
+} from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../utils/api';
+import Navigation from '../components/Navigation';
+import { AllergyInput } from '../components/AllergyInput';
+import { MedicationInput } from '../components/MedicationInput';
 
 export default function RegisterPage() {
   const { token } = useAuth();
   const api = React.useMemo(() => apiClient(token), [token]);
   const initialForm = {
-    fullName: '', nickname: '', dob: '', gender: '', address: '', phone: '', email: '',
+    fullName: '', nickname: '', dob: '', gender: '', address: '', 
+    phones: [{ type: 'mobile', number: '' }], email: '',
     insurance: { provider: '', memberId: '', groupNumber: '' },
     referral: { source: '', contact: '' },
     allergies: [], medications: [], pastMedicalHistory: '', problemList: [], immunizations: [],
@@ -25,14 +43,15 @@ export default function RegisterPage() {
 
   const checkDuplicate = async () => {
     setDuplicate(null);
-    if (!form.fullName || !form.dob || !form.phone) return;
+    const primaryPhone = form.phones?.[0]?.number;
+    if (!form.fullName || !form.dob || !primaryPhone) return;
     try {
-      const res = await api.post('/patients/check-duplicate', { fullName: form.fullName, dob: form.dob, phone: form.phone });
+      const res = await api.post('/patients/check-duplicate', { fullName: form.fullName, dob: form.dob, phone: primaryPhone });
       setDuplicate(res.duplicate ? res.patient : null);
     } catch { /* ignore */ }
   };
 
-  React.useEffect(() => { checkDuplicate(); }, [form.fullName, form.dob, form.phone]);
+  React.useEffect(() => { checkDuplicate(); }, [form.fullName, form.dob, form.phones]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -53,88 +72,376 @@ export default function RegisterPage() {
     }
   };
 
+  const [showSuccessDialog, setShowSuccessDialog] = React.useState(false);
+
+  const handleSuccessClose = () => {
+    setShowSuccessDialog(false);
+    setForm(initialForm);
+    setDuplicate(null);
+  };
+
+  const modifiedSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    try {
+      const payload = { ...form };
+      // Normalize numeric vitals
+      const vs = payload.vitalsAtCheckIn;
+      ['temperatureC','respiratoryRate','pulse'].forEach(k => { if (vs[k] === '') vs[k] = null; else vs[k] = Number(vs[k]); });
+      if (!token) throw new Error('Please login');
+      const created = await api.post('/patients', payload);
+      setShowSuccessDialog(true);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   return (
-    <Container maxWidth="sm" sx={{ py: 3 }}>
-      <Typography variant="h6" gutterBottom>New Patient Registration</Typography>
-      <Box component="form" onSubmit={submit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField label="Full name" value={form.fullName} onChange={onChange('fullName')} required fullWidth />
-        <TextField label="Nickname (optional)" value={form.nickname} onChange={onChange('nickname')} fullWidth />
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <DatePicker
-              label="Date of Birth"
-              value={form.dob || null}
-              onChange={(val)=> setForm(f=>({...f, dob: val ? val.format('YYYY-MM-DD') : ''}))}
-              slotProps={{ textField: { fullWidth: true, required: true }}}
+    <Navigation title="Patient Registration" currentPath="/register" showBackButton onBack={() => window.location.href = '/'}>
+      <Box sx={{ 
+        minHeight: '100vh', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        py: 3
+      }}>
+        <Container maxWidth="lg">
+        <Card sx={{ mb: 3 }}>
+          <CardHeader
+            avatar={
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <PersonAddIcon />
+              </Avatar>
+            }
+            title={
+              <Typography variant="h4" color="primary">
+                New Patient Registration
+              </Typography>
+            }
+            subheader="Electronic Medical Records - HIPAA Compliant"
+          />
+        </Card>
+
+        <Box component="form" onSubmit={modifiedSubmit}>
+          {/* Basic Information */}
+          <Card sx={{ mb: 3 }}>
+            <CardHeader 
+              title="Patient Information" 
+              sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }}
             />
-          </Grid>
-          <Grid item xs={6}><TextField label="Gender" value={form.gender} onChange={onChange('gender')} fullWidth /></Grid>
-        </Grid>
-        <TextField label="Address" value={form.address} onChange={onChange('address')} fullWidth />
-        <Grid container spacing={2}>
-          <Grid item xs={6}><TextField label="Phone" value={form.phone} onChange={onChange('phone')} required fullWidth /></Grid>
-          <Grid item xs={6}><TextField label="Email" type="email" value={form.email} onChange={onChange('email')} fullWidth /></Grid>
-        </Grid>
+            <CardContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={8}>
+                  <TextField 
+                    label="Full Name" 
+                    value={form.fullName} 
+                    onChange={onChange('fullName')} 
+                    required 
+                    fullWidth 
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField 
+                    label="Nickname (Optional)" 
+                    value={form.nickname} 
+                    onChange={onChange('nickname')} 
+                    fullWidth 
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <DatePicker
+                    label="Date of Birth"
+                    value={form.dob || null}
+                    onChange={(val)=> setForm(f=>({...f, dob: val ? val.format('YYYY-MM-DD') : ''}))}
+                    slotProps={{ textField: { fullWidth: true, required: true }}}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField label="Gender" value={form.gender} onChange={onChange('gender')} fullWidth />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Address" value={form.address} onChange={onChange('address')} fullWidth multiline rows={2} />
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Phone Numbers *
+                  </Typography>
+                  {form.phones.map((phone, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                      <TextField
+                        select
+                        label="Type"
+                        value={phone.type}
+                        onChange={(e) => {
+                          const newPhones = [...form.phones];
+                          newPhones[index].type = e.target.value;
+                          setForm(f => ({ ...f, phones: newPhones }));
+                        }}
+                        sx={{ minWidth: 120 }}
+                        SelectProps={{ native: true }}
+                      >
+                        <option value="mobile">Mobile</option>
+                        <option value="home">Home</option>
+                        <option value="work">Work</option>
+                      </TextField>
+                      <TextField
+                        label="Phone Number"
+                        value={phone.number}
+                        onChange={(e) => {
+                          const newPhones = [...form.phones];
+                          newPhones[index].number = e.target.value;
+                          setForm(f => ({ ...f, phones: newPhones }));
+                        }}
+                        required={index === 0}
+                        fullWidth
+                      />
+                      {form.phones.length > 1 && (
+                        <IconButton
+                          onClick={() => {
+                            const newPhones = form.phones.filter((_, i) => i !== index);
+                            setForm(f => ({ ...f, phones: newPhones }));
+                          }}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                      {index === form.phones.length - 1 && (
+                        <IconButton
+                          onClick={() => {
+                            setForm(f => ({ ...f, phones: [...f.phones, { type: 'mobile', number: '' }] }));
+                          }}
+                          color="primary"
+                        >
+                          <AddIcon />
+                        </IconButton>
+                      )}
+                    </Box>
+                  ))}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField label="Email Address" type="email" value={form.email} onChange={onChange('email')} fullWidth />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
 
-        <Typography variant="subtitle1">Insurance</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12}><TextField label="Provider" value={form.insurance.provider} onChange={(e)=>setForm(f=>({...f, insurance:{...f.insurance, provider:e.target.value}}))} fullWidth /></Grid>
-          <Grid item xs={6}><TextField label="Member ID" value={form.insurance.memberId} onChange={(e)=>setForm(f=>({...f, insurance:{...f.insurance, memberId:e.target.value}}))} fullWidth /></Grid>
-          <Grid item xs={6}><TextField label="Group #" value={form.insurance.groupNumber} onChange={(e)=>setForm(f=>({...f, insurance:{...f.insurance, groupNumber:e.target.value}}))} fullWidth /></Grid>
-        </Grid>
+          {/* Duplicate Warning */}
+          {duplicate && (
+            <Alert 
+              severity="warning" 
+              icon={<WarningIcon />}
+              sx={{ mb: 3 }}
+            >
+              <Typography variant="h6">Possible Duplicate Patient Detected</Typography>
+              <Typography>
+                Found similar patient: <strong>{duplicate.fullName}</strong> 
+                (DOB: {new Date(duplicate.dob).toLocaleDateString()})
+              </Typography>
+            </Alert>
+          )}
 
-        <Typography variant="subtitle1">Referral</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={6}><TextField label="Source" value={form.referral.source} onChange={(e)=>setForm(f=>({...f, referral:{...f.referral, source:e.target.value}}))} fullWidth /></Grid>
-          <Grid item xs={6}><TextField label="Contact" value={form.referral.contact} onChange={(e)=>setForm(f=>({...f, referral:{...f.referral, contact:e.target.value}}))} fullWidth /></Grid>
-        </Grid>
+          {/* Insurance Information */}
+          <Accordion sx={{ mb: 2 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <InsuranceIcon color="primary" />
+                <Typography variant="h6">Insurance Information</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField 
+                    label="Insurance Provider" 
+                    value={form.insurance.provider} 
+                    onChange={(e)=>setForm(f=>({...f, insurance:{...f.insurance, provider:e.target.value}}))} 
+                    fullWidth 
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField 
+                    label="Member ID" 
+                    value={form.insurance.memberId} 
+                    onChange={(e)=>setForm(f=>({...f, insurance:{...f.insurance, memberId:e.target.value}}))} 
+                    fullWidth 
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField 
+                    label="Group Number" 
+                    value={form.insurance.groupNumber} 
+                    onChange={(e)=>setForm(f=>({...f, insurance:{...f.insurance, groupNumber:e.target.value}}))} 
+                    fullWidth 
+                  />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
 
-        <Typography variant="subtitle1">Vitals at Check-in</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={6}><TextField label="Temp (C)" value={form.vitalsAtCheckIn.temperatureC} onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, temperatureC:e.target.value}}))} fullWidth /></Grid>
-          <Grid item xs={6}><TextField label="BP" value={form.vitalsAtCheckIn.bloodPressure} onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, bloodPressure:e.target.value}}))} fullWidth /></Grid>
-          <Grid item xs={6}><TextField label="Respiratory Rate" value={form.vitalsAtCheckIn.respiratoryRate} onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, respiratoryRate:e.target.value}}))} fullWidth /></Grid>
-          <Grid item xs={6}><TextField label="Pulse" value={form.vitalsAtCheckIn.pulse} onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, pulse:e.target.value}}))} fullWidth /></Grid>
-        </Grid>
+          {/* Referral Information */}
+          <Accordion sx={{ mb: 2 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <HospitalIcon color="primary" />
+                <Typography variant="h6">Referral Information</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField 
+                    label="Referral Source" 
+                    value={form.referral.source} 
+                    onChange={(e)=>setForm(f=>({...f, referral:{...f.referral, source:e.target.value}}))} 
+                    fullWidth 
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField 
+                    label="Contact Information" 
+                    value={form.referral.contact} 
+                    onChange={(e)=>setForm(f=>({...f, referral:{...f.referral, contact:e.target.value}}))} 
+                    fullWidth 
+                  />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
 
-        {duplicate && (
-          <Alert severity="warning">Possible duplicate: {duplicate.fullName} ({new Date(duplicate.dob).toLocaleDateString()})</Alert>
-        )}
+          {/* Vitals */}
+          <Accordion sx={{ mb: 2 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <VitalsIcon color="primary" />
+                <Typography variant="h6">Initial Vitals</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField 
+                    label="Temperature (°C)" 
+                    value={form.vitalsAtCheckIn.temperatureC} 
+                    onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, temperatureC:e.target.value}}))} 
+                    fullWidth 
+                    type="number"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField 
+                    label="Blood Pressure" 
+                    value={form.vitalsAtCheckIn.bloodPressure} 
+                    onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, bloodPressure:e.target.value}}))} 
+                    fullWidth 
+                    placeholder="120/80"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField 
+                    label="Respiratory Rate" 
+                    value={form.vitalsAtCheckIn.respiratoryRate} 
+                    onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, respiratoryRate:e.target.value}}))} 
+                    fullWidth 
+                    type="number"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField 
+                    label="Pulse (BPM)" 
+                    value={form.vitalsAtCheckIn.pulse} 
+                    onChange={(e)=>setForm(f=>({...f, vitalsAtCheckIn:{...f.vitalsAtCheckIn, pulse:e.target.value}}))} 
+                    fullWidth 
+                    type="number"
+                  />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
 
-        <Typography variant="subtitle1">Allergies</Typography>
-        <Stack spacing={1}>
-          {form.allergies.map((a, idx) => (
-            <Grid container spacing={1} alignItems="center" key={idx}>
-              <Grid item xs={5}><TextField label="Substance" value={a.substance} onChange={(e)=>setForm(f=>{ const arr=[...f.allergies]; arr[idx]={...arr[idx], substance:e.target.value}; return {...f, allergies:arr}; })} fullWidth /></Grid>
-              <Grid item xs={4}><TextField label="Reaction" value={a.reaction||''} onChange={(e)=>setForm(f=>{ const arr=[...f.allergies]; arr[idx]={...arr[idx], reaction:e.target.value}; return {...f, allergies:arr}; })} fullWidth /></Grid>
-              <Grid item xs={2}><TextField label="Severity" value={a.severity||''} onChange={(e)=>setForm(f=>{ const arr=[...f.allergies]; arr[idx]={...arr[idx], severity:e.target.value}; return {...f, allergies:arr}; })} fullWidth /></Grid>
-              <Grid item xs={1}><IconButton aria-label="remove allergy" onClick={()=>setForm(f=>({...f, allergies: f.allergies.filter((_,i)=>i!==idx)}))}><DeleteIcon /></IconButton></Grid>
-            </Grid>
-          ))}
-          <Button size="small" startIcon={<AddIcon/>} onClick={()=>setForm(f=>({...f, allergies:[...f.allergies, { substance:'' }]}))}>Add allergy</Button>
-        </Stack>
+          {/* Medical History */}
+          <Accordion sx={{ mb: 2 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <MedicalIcon color="primary" />
+                <Typography variant="h6">Medical History</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={3}>
+                {/* Allergies */}
+                <AllergyInput
+                  allergies={form.allergies}
+                  onChange={(allergies) => setForm(f => ({ ...f, allergies }))}
+                  apiClient={api}
+                />
 
-        <Typography variant="subtitle1" sx={{ mt: 2 }}>Medications</Typography>
-        <Stack spacing={1}>
-          {form.medications.map((m, idx) => (
-            <Grid container spacing={1} alignItems="center" key={idx}>
-              <Grid item xs={5}><TextField label="Name" value={m.name} onChange={(e)=>setForm(f=>{ const arr=[...f.medications]; arr[idx]={...arr[idx], name:e.target.value}; return {...f, medications:arr}; })} fullWidth /></Grid>
-              <Grid item xs={3}><TextField label="Dosage" value={m.dosage||''} onChange={(e)=>setForm(f=>{ const arr=[...f.medications]; arr[idx]={...arr[idx], dosage:e.target.value}; return {...f, medications:arr}; })} fullWidth /></Grid>
-              <Grid item xs={3}><TextField label="Frequency" value={m.frequency||''} onChange={(e)=>setForm(f=>{ const arr=[...f.medications]; arr[idx]={...arr[idx], frequency:e.target.value}; return {...f, medications:arr}; })} fullWidth /></Grid>
-              <Grid item xs={1}><IconButton aria-label="remove medication" onClick={()=>setForm(f=>({...f, medications: f.medications.filter((_,i)=>i!==idx)}))}><DeleteIcon /></IconButton></Grid>
-            </Grid>
-          ))}
-          <Button size="small" startIcon={<AddIcon/>} onClick={()=>setForm(f=>({...f, medications:[...f.medications, { name:'' }]}))}>Add medication</Button>
-        </Stack>
+                {/* Medications */}
+                <MedicationInput
+                  medications={form.medications}
+                  onChange={(medications) => setForm(f => ({ ...f, medications }))}
+                  apiClient={api}
+                />
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
 
-        {error && <Alert severity="error">{error}</Alert>}
-        {success && <Alert severity="success">{success}</Alert>}
-        <Button variant="contained" type="submit">Save patient</Button>
+          {/* Error and Success Messages */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+
+          {/* Submit Button */}
+          <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
+            <Button 
+              variant="contained" 
+              type="submit" 
+              size="large"
+              startIcon={<PersonAddIcon />}
+              sx={{ 
+                py: 2, 
+                px: 4, 
+                fontSize: '1.1rem',
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
+              }}
+            >
+              Register Patient
+            </Button>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              All patient data is encrypted and HIPAA compliant
+            </Typography>
+          </Paper>
+        </Box>
+
+        {/* Success Dialog */}
+        <Dialog open={showSuccessDialog} onClose={handleSuccessClose} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ textAlign: 'center', bgcolor: 'success.light' }}>
+            <Avatar sx={{ bgcolor: 'success.main', mx: 'auto', mb: 2 }}>
+              <CheckIcon />
+            </Avatar>
+            <Typography variant="h5">Patient Registered Successfully!</Typography>
+          </DialogTitle>
+          <DialogContent sx={{ textAlign: 'center', py: 3 }}>
+            <Typography variant="body1" gutterBottom>
+              <strong>{form.fullName}</strong> has been successfully registered in the EMR system.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Patient information has been securely stored and is ready for medical care.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+            <Button variant="contained" onClick={handleSuccessClose} size="large">
+              Register Another Patient
+            </Button>
+            <Button variant="outlined" onClick={() => window.location.href = '/'}>
+              Return to Dashboard
+            </Button>
+          </DialogActions>
+        </Dialog>
+        </Container>
       </Box>
-      <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-        <Chip label="Allergies" color="warning" variant="outlined" />
-        <Chip label="Medications" variant="outlined" />
-      </Stack>
-    </Container>
+    </Navigation>
   );
 }
