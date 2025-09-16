@@ -4,7 +4,7 @@ import {
   DialogContent, DialogActions, Button, TextField, Grid, Alert, Card, CardContent, CardHeader,
   Avatar, Chip, Paper, Divider, Stack, InputAdornment, Fab, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, TablePagination, Tooltip, Badge, Accordion, 
-  AccordionSummary, AccordionDetails
+  AccordionSummary, AccordionDetails, MenuItem
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -31,9 +31,9 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../utils/api';
-import Navigation from '../components/Navigation';
-import { AllergyInput } from '../components/AllergyInput';
-import { MedicationInput } from '../components/MedicationInput';
+import Navigation from '../../components/Navigation';
+import AllergyInput from '../../components/AllergyInput';
+import MedicationInput from '../../components/MedicationInput';
 
 export default function AdminPatientsPage() {
   const { token, user, isLoading: authLoading } = useAuth();
@@ -74,13 +74,15 @@ export default function AdminPatientsPage() {
         if (!patient) return false;
         
         const name = (patient.fullName || '').toLowerCase();
-        const phones = (patient.phones || []).map(p => p.number).join(' ');
+        const phones = (patient.phones || []).map(p => p.number).join(' ').toLowerCase();
         const email = (patient.email || '').toLowerCase();
+        const address = (patient.address || '').toLowerCase();
         const search = searchTerm.toLowerCase();
         
         return name.includes(search) || 
-               phones.includes(searchTerm) || 
-               email.includes(search);
+               phones.includes(search) || 
+               email.includes(search) ||
+               address.includes(search);
       });
       setFilteredItems(filtered);
       setPage(0);
@@ -344,7 +346,7 @@ export default function AdminPatientsPage() {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  placeholder="Search patients by name, phone, or email..."
+                  placeholder="Search patients by name, phone, email, or address..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
@@ -430,16 +432,36 @@ export default function AdminPatientsPage() {
                       </TableCell>
                       <TableCell>
                         <Stack spacing={0.5}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <PhoneIcon fontSize="small" color="primary" />
-                            <Box>
-                              {(patient.phones || []).map((phone, idx) => (
-                                <Typography key={idx} variant="body2">
-                                  {phone.number} ({phone.type})
-                                </Typography>
-                              ))}
+                          <Tooltip
+                            title={
+                              <Box>
+                                <Typography variant="subtitle2" sx={{ mb: 1 }}>Phone Numbers:</Typography>
+                                {(patient.phones || []).map((phone, idx) => (
+                                  <Typography key={idx} variant="body2">
+                                    {phone.number} ({phone.type})
+                                  </Typography>
+                                ))}
+                              </Box>
+                            }
+                            arrow
+                            placement="top"
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}>
+                              <PhoneIcon fontSize="small" color="primary" />
+                              <Box>
+                                {(patient.phones || []).slice(0, 1).map((phone, idx) => (
+                                  <Typography key={idx} variant="body2">
+                                    {phone.number} ({phone.type})
+                                    {(patient.phones || []).length > 1 && (
+                                      <Typography component="span" variant="caption" color="text.secondary">
+                                        {' '}+{(patient.phones || []).length - 1} more
+                                      </Typography>
+                                    )}
+                                  </Typography>
+                                ))}
+                              </Box>
                             </Box>
-                          </Box>
+                          </Tooltip>
                           {patient.email && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <EmailIcon fontSize="small" color="primary" />
@@ -570,11 +592,19 @@ export default function AdminPatientsPage() {
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField 
+                          select
                           label="Gender" 
                           value={form.gender || ''} 
                           onChange={(e) => setForm(f => ({ ...f, gender: e.target.value }))} 
-                          fullWidth 
-                        />
+                          fullWidth
+                          placeholder="Select Gender"
+                        >
+                          <MenuItem value="">Select Gender</MenuItem>
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                          <MenuItem value="Other">Other</MenuItem>
+                          <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
+                        </TextField>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <Box>

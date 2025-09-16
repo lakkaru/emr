@@ -146,3 +146,5 @@ export function AllergyInput({ allergies = [], onChange, apiClient }) {
     </Box>
   );
 }
+
+export default AllergyInput;

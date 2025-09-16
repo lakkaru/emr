@@ -187,3 +187,5 @@ export function MedicationInput({ medications = [], onChange, apiClient }) {
     </Box>
   );
 }
+
+export default MedicationInput;

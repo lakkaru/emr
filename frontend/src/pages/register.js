@@ -17,11 +17,12 @@ import {
   Security as InsuranceIcon,
   MonitorHeart as VitalsIcon
 } from '@mui/icons-material';
+import { MenuItem } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../utils/api';
 import Navigation from '../components/Navigation';
-import { AllergyInput } from '../components/AllergyInput';
-import { MedicationInput } from '../components/MedicationInput';
+import AllergyInput from '../components/AllergyInput';
+import MedicationInput from '../components/MedicationInput';
 
 export default function RegisterPage() {
   const { token } = useAuth();
@@ -157,7 +158,20 @@ export default function RegisterPage() {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Gender" value={form.gender} onChange={onChange('gender')} fullWidth />
+                  <TextField 
+                    select
+                    label="Gender" 
+                    value={form.gender} 
+                    onChange={onChange('gender')} 
+                    fullWidth
+                    // placeholder="Select Gender"
+                  >
+                    {/* <MenuItem value="">Select Gender</MenuItem> */}
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
+                    <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
+                  </TextField>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField label="Address" value={form.address} onChange={onChange('address')} fullWidth multiline rows={2} />
