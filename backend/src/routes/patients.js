@@ -4,9 +4,11 @@ const { audit } = require('../middleware/audit');
 const Patient = require('../models/Patient');
 const { patientSchema } = require('../validators');
 
-function buildDedupeKey({ fullName, dob, phone }) {
+function buildDedupeKey({ fullName, dob, phones }) {
   const norm = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, '');
-  return [norm(fullName), new Date(dob).toISOString().slice(0, 10), norm(phone).replace(/[^0-9]/g, '')].join('|');
+  // Use the first phone number for deduplication
+  const firstPhone = phones && phones.length > 0 ? phones[0].number : '';
+  return [norm(fullName), new Date(dob).toISOString().slice(0, 10), norm(firstPhone).replace(/[^0-9]/g, '')].join('|');
 }
 
 router.use(authRequired);
@@ -21,7 +23,7 @@ router.post('/', requireRole(['admin', 'doctor', 'nurse', 'clerk']), async (req,
       return res.status(409).json({ error: 'Possible duplicate', duplicateId: dup._id });
     }
     const created = await Patient.create(value);
-    await audit('create', 'Patient', created._id.toString(), req, { fields: ['fullName', 'dob', 'phone'] });
+    await audit('create', 'Patient', created._id.toString(), req, { fields: ['fullName', 'dob', 'phones'] });
     res.status(201).json(created);
   } catch (e) {
     if (e.isJoi) return res.status(400).json({ error: e.message });
@@ -36,7 +38,7 @@ router.get('/', requireRole(['admin', 'doctor', 'nurse', 'clerk']), async (req, 
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
-      Patient.find({}, { fullName: 1, dob: 1, phone: 1, gender: 1, createdAt: 1 }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Patient.find({}, { fullName: 1, dob: 1, phones: 1, gender: 1, address: 1, createdAt: 1 }).sort({ createdAt: -1 }).skip(skip).limit(limit),
       Patient.countDocuments()
     ]);
     res.json({ items, page, limit, total });
@@ -46,10 +48,10 @@ router.get('/', requireRole(['admin', 'doctor', 'nurse', 'clerk']), async (req, 
 // Duplicate check endpoint
 router.post('/check-duplicate', requireRole(['admin', 'doctor', 'nurse', 'clerk']), async (req, res, next) => {
   try {
-    const { fullName, dob, phone } = req.body || {};
-    if (!fullName || !dob || !phone) return res.status(400).json({ error: 'Missing fields' });
-    const key = buildDedupeKey({ fullName, dob, phone });
-    const exists = await Patient.findOne({ dedupeKey: key }, { _id: 1, fullName: 1, dob: 1, phone: 1 });
+    const { fullName, dob, phones } = req.body || {};
+    if (!fullName || !dob || !phones || phones.length === 0) return res.status(400).json({ error: 'Missing fields' });
+    const key = buildDedupeKey({ fullName, dob, phones });
+    const exists = await Patient.findOne({ dedupeKey: key }, { _id: 1, fullName: 1, dob: 1, phones: 1 });
     if (!exists) return res.json({ duplicate: false });
     res.json({ duplicate: true, patient: exists });
   } catch (e) { next(e); }
@@ -71,7 +73,7 @@ router.put('/:id', requireRole(['admin']), async (req, res, next) => {
     value.dedupeKey = buildDedupeKey(value);
     const updated = await Patient.findByIdAndUpdate(req.params.id, value, { new: true });
     if (!updated) return res.status(404).json({ error: 'Not found' });
-    await audit('update', 'Patient', updated._id.toString(), req, { fields: ['fullName', 'dob', 'phone'] });
+    await audit('update', 'Patient', updated._id.toString(), req, { fields: ['fullName', 'dob', 'phones'] });
     res.json(updated);
   } catch (e) {
     if (e.isJoi) return res.status(400).json({ error: e.message });

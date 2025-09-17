@@ -4,7 +4,7 @@ import {
   DialogContent, DialogActions, Button, TextField, Grid, Alert, Card, CardContent, CardHeader,
   Avatar, Chip, Paper, Divider, Stack, InputAdornment, Fab, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, TablePagination, Tooltip, Badge, Accordion, 
-  AccordionSummary, AccordionDetails, MenuItem
+  AccordionSummary, AccordionDetails, MenuItem, FormControl, InputLabel, Select
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -25,7 +25,11 @@ import {
   Security as InsuranceIcon,
   Healing as MedicalIcon,
   MonitorHeart as VitalsIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  Security as SecurityIcon,
+  Healing as HealingIcon,
+  MonitorHeart as MonitorHeartIcon,
+  LocalHospital as LocalHospitalIcon
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
@@ -48,6 +52,8 @@ export default function AdminPatientsPage() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [loading, setLoading] = React.useState(false);
+  const [viewOpen, setViewOpen] = React.useState(false);
+  const [viewPatient, setViewPatient] = React.useState(null);
 
   React.useEffect(() => {
     // Wait for auth context to initialize
@@ -167,7 +173,20 @@ export default function AdminPatientsPage() {
     }
   };
 
+  // Helper function to remove _id fields from array items
+  const cleanArrayData = (array) => {
+    if (!Array.isArray(array)) return array;
+    return array.map(item => {
+      if (typeof item === 'object' && item !== null) {
+        const { _id, ...cleanItem } = item;
+        return cleanItem;
+      }
+      return item;
+    });
+  };
+
   const save = async () => {
+    console.log('Save function called'); // Debug log
     setLoading(true);
     setError('');
     setSuccess('');
@@ -179,38 +198,78 @@ export default function AdminPatientsPage() {
 
       // Create clean payload
       const payload = {
-        fullName: form.fullName || '',
-        nickname: form.nickname || '',
-        dob: form.dob ? (dayjs.isDayjs(form.dob) ? form.dob.format('YYYY-MM-DD') : form.dob) : '',
+        fullName: form.fullName?.trim() || '',
+        nickname: form.nickname?.trim() || '',
+        dob: (() => {
+          try {
+            if (!form.dob) return '';
+            return dayjs.isDayjs(form.dob) ? form.dob.format('YYYY-MM-DD') : dayjs(form.dob).format('YYYY-MM-DD');
+          } catch (err) {
+            console.error('Date formatting error:', err);
+            return form.dob;
+          }
+        })(),
         gender: form.gender || '',
-        phones: form.phones || [{ type: 'mobile', number: '' }],
-        email: form.email || '',
-        address: form.address || '',
-        insurance: form.insurance || {},
-        allergies: form.allergies || [],
-        medications: form.medications || [],
-        pastMedicalHistory: form.pastMedicalHistory || '',
-        problemList: form.problemList || [],
-        immunizations: form.immunizations || [],
-        vitalsAtCheckIn: form.vitalsAtCheckIn || {},
-        referral: form.referral || {}
+        phones: cleanArrayData(form.phones || [{ type: 'mobile', number: '' }]).map(phone => ({
+          type: phone.type || 'mobile',
+          number: phone.number?.trim() || ''
+        })),
+        email: form.email?.trim() || '',
+        address: form.address?.trim() || '',
+        insurance: {
+          provider: form.insurance?.provider?.trim() || '',
+          memberId: form.insurance?.memberId?.trim() || '',
+          groupNumber: form.insurance?.groupNumber?.trim() || '',
+          coverageNotes: form.insurance?.coverageNotes?.trim() || ''
+        },
+        referral: {
+          source: form.referral?.source?.trim() || '',
+          contact: form.referral?.contact?.trim() || ''
+        },
+        allergies: cleanArrayData(form.allergies || []),
+        medications: cleanArrayData(form.medications || []),
+        pastMedicalHistory: form.pastMedicalHistory?.trim() || '',
+        problemList: cleanArrayData(form.problemList || []),
+        immunizations: cleanArrayData(form.immunizations || []),
+        vitalsAtCheckIn: form.vitalsAtCheckIn || {}
       };
 
-      console.log('Saving patient:', { id, payload }); // Debug log
+      console.log('Original form data:', form); // Debug log
+      console.log('Cleaned payload:', payload); // Debug log
+      console.log('API URL:', `/patients/${id}`); // Debug log
+      console.log('Token available:', !!token); // Debug log
       
       const updatedPatient = await api.put(`/patients/${id}`, payload);
-      console.log('Updated patient:', updatedPatient); // Debug log
+      console.log('Patient updated successfully:', updatedPatient._id); // Debug log
       
+      // Close dialog immediately after successful save
       setOpen(false);
       setForm(null);
+      
+      // Show success message
       setSuccess('Patient updated successfully!');
+      
+      // Reload patient list to reflect changes
       await loadPatients();
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) { 
       console.error('Error saving patient:', e);
-      setError(`Failed to save patient: ${e.message}`); 
+      console.error('Full error details:', e);
+      
+      // Try to extract more specific error information
+      let errorMessage = e.message;
+      if (e.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      }
+      
+      console.error('Error message for user:', errorMessage);
+      setError(`Failed to save patient: ${errorMessage}`); 
+      
+      // Don't close dialog on error, let user fix the issue
     } finally {
       setLoading(false);
     }
@@ -223,6 +282,27 @@ export default function AdminPatientsPage() {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleViewPatient = async (patient) => {
+    setLoading(true);
+    try {
+      // Fetch complete patient data from API
+      const completePatient = await api.get(`/patients/${patient._id}`);
+      console.log('Complete patient data for view:', completePatient);
+      setViewPatient(completePatient);
+      setViewOpen(true);
+    } catch (error) {
+      console.error('Error fetching patient details:', error);
+      setError(`Failed to load patient details: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseView = () => {
+    setViewOpen(false);
+    setViewPatient(null);
   };
 
   const formatDate = (dateString) => {
@@ -392,14 +472,18 @@ export default function AdminPatientsPage() {
                   <TableCell><strong>Contact</strong></TableCell>
                   <TableCell><strong>Address</strong></TableCell>
                   <TableCell><strong>Registered</strong></TableCell>
-                  <TableCell align="center"><strong>Actions</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredItems
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((patient) => (
-                    <TableRow key={patient._id} hover>
+                    <TableRow 
+                      key={patient._id} 
+                      hover 
+                      onClick={() => handleViewPatient(patient)}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar sx={{ bgcolor: 'primary.light' }}>
@@ -473,29 +557,21 @@ export default function AdminPatientsPage() {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <AddressIcon fontSize="small" color="primary" />
-                          <Typography variant="body2" sx={{ maxWidth: 200 }}>
-                            {patient.address || 'Not provided'}
-                          </Typography>
+                          {patient.address ? (
+                            <Typography variant="body2" sx={{ maxWidth: 200 }}>
+                              {patient.address}
+                            </Typography>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ maxWidth: 200 }}>
+                              No address provided
+                            </Typography>
+                          )}
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
                           {formatDate(patient.createdAt)}
                         </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Tooltip title="Edit Patient">
-                          <IconButton 
-                            color="primary" 
-                            onClick={() => openEdit(patient._id)}
-                            sx={{ 
-                              bgcolor: 'primary.light', 
-                              '&:hover': { bgcolor: 'primary.main', color: 'white' } 
-                            }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -847,6 +923,302 @@ export default function AdminPatientsPage() {
               sx={{ minWidth: 120 }}
             >
               {loading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Patient View Dialog */}
+        <Dialog 
+          open={viewOpen} 
+          onClose={handleCloseView} 
+          maxWidth="lg" 
+          fullWidth
+          PaperProps={{
+            sx: { minHeight: '80vh' }
+          }}
+        >
+          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar sx={{ bgcolor: 'white', color: 'primary.main' }}>
+              <PersonIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h5">
+                {viewPatient?.fullName}
+              </Typography>
+              {viewPatient?.nickname && (
+                <Typography variant="subtitle2" sx={{ opacity: 0.9 }}>
+                  "{viewPatient.nickname}"
+                </Typography>
+              )}
+            </Box>
+          </DialogTitle>
+          
+          <DialogContent sx={{ p: 0 }}>
+            {viewPatient && (
+              <Box>
+                {/* Demographics Section */}
+                <Accordion defaultExpanded>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'primary.light' }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PersonIcon /> Demographics & Contact
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Full Name</Typography>
+                        <Typography variant="body1">{viewPatient.fullName}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Nickname</Typography>
+                        <Typography variant="body1">{viewPatient.nickname || 'None'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Typography variant="subtitle2" color="primary">Date of Birth</Typography>
+                        <Typography variant="body1">
+                          {formatDate(viewPatient.dob)} ({calculateAge(viewPatient.dob)} years old)
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Typography variant="subtitle2" color="primary">Gender</Typography>
+                        <Typography variant="body1">{viewPatient.gender || 'Not specified'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Typography variant="subtitle2" color="primary">Email</Typography>
+                        <Typography variant="body1">{viewPatient.email || 'Not provided'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Phone Numbers</Typography>
+                        {(viewPatient.phones || []).map((phone, idx) => (
+                          <Chip 
+                            key={idx}
+                            label={`${phone.number} (${phone.type})`}
+                            variant="outlined"
+                            sx={{ mr: 1, mb: 1 }}
+                          />
+                        ))}
+                        {(!viewPatient.phones || viewPatient.phones.length === 0) && (
+                          <Typography variant="body1">No phone numbers provided</Typography>
+                        )}
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Address</Typography>
+                        <Typography variant="body1">{viewPatient.address || 'No address provided'}</Typography>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+
+                {/* Insurance Information */}
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'info.light' }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <SecurityIcon /> Insurance Information
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Provider</Typography>
+                        <Typography variant="body1">{viewPatient.insurance?.provider || 'Not provided'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Member ID</Typography>
+                        <Typography variant="body1">{viewPatient.insurance?.memberId || 'Not provided'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Group Number</Typography>
+                        <Typography variant="body1">{viewPatient.insurance?.groupNumber || 'Not provided'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Coverage Notes</Typography>
+                        <Typography variant="body1">{viewPatient.insurance?.coverageNotes || 'None'}</Typography>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+
+                {/* Medical History */}
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'warning.light' }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <HealingIcon /> Medical History
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack spacing={3}>
+                      {/* Allergies */}
+                      <Box>
+                        <Typography variant="subtitle2" color="primary" gutterBottom>Allergies</Typography>
+                        {viewPatient.allergies && viewPatient.allergies.length > 0 ? (
+                          viewPatient.allergies.map((allergy, idx) => (
+                            <Paper key={idx} sx={{ p: 2, mb: 1, bgcolor: 'warning.light' }}>
+                              <Typography variant="body1">
+                                <strong>{allergy.substance}</strong>
+                                {allergy.reaction && ` - ${allergy.reaction}`}
+                                {allergy.severity && (
+                                  <Chip 
+                                    label={allergy.severity}
+                                    size="small"
+                                    color={allergy.severity === 'severe' ? 'error' : allergy.severity === 'moderate' ? 'warning' : 'default'}
+                                    sx={{ ml: 1 }}
+                                  />
+                                )}
+                              </Typography>
+                            </Paper>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">No known allergies</Typography>
+                        )}
+                      </Box>
+
+                      {/* Current Medications */}
+                      <Box>
+                        <Typography variant="subtitle2" color="primary" gutterBottom>Current Medications</Typography>
+                        {viewPatient.medications && viewPatient.medications.length > 0 ? (
+                          viewPatient.medications.map((medication, idx) => (
+                            <Paper key={idx} sx={{ p: 2, mb: 1, bgcolor: 'info.light' }}>
+                              <Typography variant="body1">
+                                <strong>{medication.name}</strong>
+                                {medication.dosage && ` - ${medication.dosage}`}
+                                {medication.frequency && ` - ${medication.frequency}`}
+                              </Typography>
+                            </Paper>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">No current medications</Typography>
+                        )}
+                      </Box>
+
+                      {/* Past Medical History */}
+                      <Box>
+                        <Typography variant="subtitle2" color="primary" gutterBottom>Past Medical History</Typography>
+                        <Typography variant="body1">
+                          {viewPatient.pastMedicalHistory || 'No past medical history recorded'}
+                        </Typography>
+                      </Box>
+
+                      {/* Problem List */}
+                      <Box>
+                        <Typography variant="subtitle2" color="primary" gutterBottom>Problem List</Typography>
+                        {viewPatient.problemList && viewPatient.problemList.length > 0 ? (
+                          viewPatient.problemList.map((problem, idx) => (
+                            <Paper key={idx} sx={{ p: 2, mb: 1, bgcolor: 'error.light' }}>
+                              <Typography variant="body1">
+                                <strong>{problem.description}</strong>
+                                {problem.code && ` (${problem.code})`}
+                                {problem.status && (
+                                  <Chip 
+                                    label={problem.status}
+                                    size="small"
+                                    sx={{ ml: 1 }}
+                                  />
+                                )}
+                              </Typography>
+                            </Paper>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">No active problems</Typography>
+                        )}
+                      </Box>
+
+                      {/* Immunizations */}
+                      <Box>
+                        <Typography variant="subtitle2" color="primary" gutterBottom>Immunization History</Typography>
+                        {viewPatient.immunizations && viewPatient.immunizations.length > 0 ? (
+                          viewPatient.immunizations.map((immunization, idx) => (
+                            <Paper key={idx} sx={{ p: 2, mb: 1, bgcolor: 'success.light' }}>
+                              <Typography variant="body1">
+                                <strong>{immunization.name}</strong>
+                                {immunization.date && ` - ${formatDate(immunization.date)}`}
+                              </Typography>
+                            </Paper>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">No immunization records</Typography>
+                        )}
+                      </Box>
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+
+                {/* Vital Signs */}
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'success.light' }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <MonitorHeartIcon /> Latest Vital Signs
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={3}>
+                        <Typography variant="subtitle2" color="primary">Temperature</Typography>
+                        <Typography variant="body1">
+                          {viewPatient.vitalsAtCheckIn?.temperatureC ? `${viewPatient.vitalsAtCheckIn.temperatureC}°C` : 'Not recorded'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Typography variant="subtitle2" color="primary">Blood Pressure</Typography>
+                        <Typography variant="body1">
+                          {viewPatient.vitalsAtCheckIn?.bloodPressure || 'Not recorded'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Typography variant="subtitle2" color="primary">Respiratory Rate</Typography>
+                        <Typography variant="body1">
+                          {viewPatient.vitalsAtCheckIn?.respiratoryRate ? `${viewPatient.vitalsAtCheckIn.respiratoryRate} bpm` : 'Not recorded'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Typography variant="subtitle2" color="primary">Pulse</Typography>
+                        <Typography variant="body1">
+                          {viewPatient.vitalsAtCheckIn?.pulse ? `${viewPatient.vitalsAtCheckIn.pulse} bpm` : 'Not recorded'}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+
+                {/* Referral Information */}
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'secondary.light' }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <LocalHospitalIcon /> Referral Information
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Referral Source</Typography>
+                        <Typography variant="body1">{viewPatient.referral?.source || 'Not provided'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="primary">Contact Information</Typography>
+                        <Typography variant="body1">{viewPatient.referral?.contact || 'Not provided'}</Typography>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              </Box>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 3, bgcolor: 'grey.50' }}>
+            <Button 
+              onClick={() => {
+                handleCloseView();
+                openEdit(viewPatient._id);
+              }}
+              variant="outlined"
+              startIcon={<EditIcon />}
+            >
+              Edit Patient
+            </Button>
+            <Button 
+              onClick={handleCloseView}
+              variant="contained"
+            >
+              Close
             </Button>
           </DialogActions>
         </Dialog>

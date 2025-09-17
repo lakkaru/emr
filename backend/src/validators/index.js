@@ -18,7 +18,10 @@ const patientSchema = Joi.object({
   dob: Joi.date().iso().required(),
   gender: Joi.string().allow('', null),
   address: Joi.string().allow('', null),
-  phone: Joi.string().pattern(/^[0-9+\-()\s]{6,20}$/).required(),
+  phones: Joi.array().items(Joi.object({
+    type: Joi.string().valid('mobile', 'home', 'work').default('mobile'),
+    number: Joi.string().pattern(/^[0-9+\-()\s]{6,20}$/).allow('', null)
+  })).min(1).default([{ type: 'mobile', number: '' }]),
   email: Joi.string().email().allow('', null),
   insurance: Joi.object({
     provider: Joi.string().allow('', null),

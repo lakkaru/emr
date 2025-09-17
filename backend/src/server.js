@@ -21,7 +21,7 @@ app.use(helmet({
 }));
 
 // CORS with allowlist
-const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const allowed = (process.env.ALLOWED_ORIGINS || 'http://localhost:8000').split(',').map(s => s.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowed.length === 0 || allowed.includes(origin)) return cb(null, true);
