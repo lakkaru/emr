@@ -45,7 +45,7 @@ const getNavigationItems = (userRole) => {
     items.push(
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/front-desk/dashboard' },
       { text: 'Register Patient', icon: <RegisterIcon />, path: '/register' },
-      { text: 'Patient Management', icon: <PatientsIcon />, path: '/admin/patients' }
+      { text: 'Patient Search', icon: <PatientsIcon />, path: '/admin/patients' }
     );
   } else if (userRole === 'medical_officer') {
     items.push(

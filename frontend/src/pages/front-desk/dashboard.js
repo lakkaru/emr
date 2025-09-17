@@ -83,19 +83,10 @@ export default function FrontDeskDashboard() {
       priority: 'high'
     },
     {
-      title: 'Patient Management',
+      title: 'Patient Search & Management',
       description: 'Search, view, and manage patient records',
-      icon: <PeopleIcon sx={{ fontSize: 40 }} />,
-      color: 'success',
-      action: 'Manage Patients',
-      path: '/admin/patients',
-      priority: 'high'
-    },
-    {
-      title: 'Patient Search',
-      description: 'Quick search for existing patients',
       icon: <SearchIcon sx={{ fontSize: 40 }} />,
-      color: 'info',
+      color: 'success',
       action: 'Search Patients',
       path: '/admin/patients',
       priority: 'high'
@@ -104,27 +95,36 @@ export default function FrontDeskDashboard() {
       title: 'Appointments',
       description: 'Schedule and manage patient appointments',
       icon: <ScheduleIcon sx={{ fontSize: 40 }} />,
-      color: 'warning',
+      color: 'info',
       action: 'View Schedule',
       path: '/appointments',
+      priority: 'medium'
+    },
+    {
+      title: 'Reports',
+      description: 'Generate front desk and patient reports',
+      icon: <AssignmentIcon sx={{ fontSize: 40 }} />,
+      color: 'warning',
+      action: 'View Reports',
+      path: '/front-desk/reports',
       priority: 'medium'
     }
   ];
 
   const quickActions = [
     {
-      title: 'Emergency Registration',
-      description: 'Quick registration for emergency patients',
-      icon: <PersonAddIcon />,
-      action: () => navigate('/register?emergency=true'),
-      color: 'error'
-    },
-    {
       title: 'Patient Check-in',
-      description: 'Check-in existing patients',
+      description: 'Check-in existing patients for appointments',
       icon: <EventIcon />,
       action: () => navigate('/checkin'),
       color: 'success'
+    },
+    {
+      title: 'New Appointment',
+      description: 'Schedule new patient appointment',
+      icon: <ScheduleIcon />,
+      action: () => navigate('/appointments/new'),
+      color: 'info'
     }
   ];
 

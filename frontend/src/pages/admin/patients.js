@@ -65,8 +65,10 @@ export default function AdminPatientsPage() {
       return; 
     }
     
-    if (!user || user.role !== 'system_admin') { 
-      console.log('User is not admin, redirecting to login');
+    // Check if user has patient management access
+    const allowedRoles = ['front_desk', 'medical_officer', 'nursing_officer', 'lab_officer', 'pharmacy_officer'];
+    if (!user || !allowedRoles.includes(user.role)) { 
+      console.log('User does not have patient access, redirecting to login');
       if (typeof window !== 'undefined') window.location.href = '/login'; 
       return; 
     }
