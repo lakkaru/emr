@@ -117,6 +117,15 @@ export default function LoginPage() {
               </Paper>
             )}
 
+            {hasUsers && (
+              <Paper sx={{ mt: 3, p: 2, bgcolor: 'warning.light', color: 'warning.contrastText' }}>
+                <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                  <strong>Need help?</strong><br />
+                  Contact your system administrator for account access
+                </Typography>
+              </Paper>
+            )}
+
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <Typography variant="caption" color="text.secondary">
                 HIPAA Compliant Healthcare Management System

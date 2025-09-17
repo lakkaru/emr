@@ -33,6 +33,7 @@ const navigationItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Register Patient', icon: <RegisterIcon />, path: '/register' },
   { text: 'Patient Management', icon: <PatientsIcon />, path: '/admin/patients' },
+  { text: 'Admin Profile', icon: <AdminIcon />, path: '/admin/profile', adminOnly: true },
 ];
 
 export default function Navigation({ 
@@ -113,7 +114,9 @@ export default function Navigation({
 
       {/* Navigation Items */}
       <List>
-        {navigationItems.map((item) => (
+        {navigationItems
+          .filter(item => !item.adminOnly || (item.adminOnly && user?.role === 'admin'))
+          .map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               onClick={() => handleNavigation(item.path)}
