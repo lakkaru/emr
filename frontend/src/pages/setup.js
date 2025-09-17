@@ -37,7 +37,7 @@ export default function SetupPage() {
     setLoading(true);
     try {
       if (hasUsers) throw new Error('Users already exist. Go to login.');
-      const res = await api.post('/auth/register', { name, email, password, role: 'admin' });
+      const res = await api.post('/auth/register', { name, email, password, role: 'system_admin' });
       setSuccess('Admin account created successfully! Redirecting to login...');
       setTimeout(() => (window.location.href = '/login'), 2000);
     } catch (e) {

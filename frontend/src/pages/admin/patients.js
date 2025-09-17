@@ -65,7 +65,7 @@ export default function AdminPatientsPage() {
       return; 
     }
     
-    if (!user || user.role !== 'admin') { 
+    if (!user || user.role !== 'system_admin') { 
       console.log('User is not admin, redirecting to login');
       if (typeof window !== 'undefined') window.location.href = '/login'; 
       return; 

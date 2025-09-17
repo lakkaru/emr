@@ -27,6 +27,7 @@ import {
   AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { getRoleDisplayName } from '../utils/roles';
 
 const drawerWidth = 280;
 
@@ -97,7 +98,7 @@ export default function Navigation({
                 {user.name}
               </Typography>
               <Chip 
-                label={user.role} 
+                label={getRoleDisplayName(user.role)} 
                 size="small" 
                 color="primary" 
                 variant="outlined" 
@@ -112,7 +113,7 @@ export default function Navigation({
       {/* Navigation Items */}
       <List>
         {navigationItems
-          .filter(item => !item.adminOnly || (item.adminOnly && user?.role === 'admin'))
+          .filter(item => !item.adminOnly || (item.adminOnly && user?.role === 'system_admin'))
           .map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
@@ -190,7 +191,7 @@ export default function Navigation({
           
           {user && (
             <Chip
-              label={`${user.name} (${user.role})`}
+              label={`${user.name} (${getRoleDisplayName(user.role)})`}
               variant="outlined"
               sx={{ color: 'white', borderColor: 'white' }}
             />

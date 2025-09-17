@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { authRequired, requireRole } = require('../middleware/auth');
 const AuditLog = require('../models/AuditLog');
 
-router.use(authRequired, requireRole(['admin']));
+router.use(authRequired, requireRole(['system_admin']));
 
 router.get('/', async (req, res, next) => {
   try {

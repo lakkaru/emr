@@ -73,10 +73,10 @@ export default function IndexPage() {
 
   // Navigation items based on role
   const navItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin', 'doctor', 'nurse', 'clerk'] },
-    { text: 'Patient Registration', icon: <PersonAddIcon />, path: '/register', roles: ['admin', 'doctor', 'nurse', 'clerk'] },
-    { text: 'Manage Patients', icon: <GroupsIcon />, path: '/admin/patients', roles: ['admin'] },
-    { text: 'Audit Logs', icon: <AssessmentIcon />, path: '/admin/audits', roles: ['admin'] },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['system_admin', 'medical_officer', 'nursing_officer', 'front_desk', 'lab_officer', 'pharmacy_officer'] },
+    { text: 'Patient Registration', icon: <PersonAddIcon />, path: '/register', roles: ['system_admin', 'medical_officer', 'nursing_officer', 'front_desk'] },
+    { text: 'Manage Patients', icon: <GroupsIcon />, path: '/admin/patients', roles: ['system_admin'] },
+    { text: 'Audit Logs', icon: <AssessmentIcon />, path: '/admin/audits', roles: ['system_admin'] },
   ];
 
   const userNavItems = navItems.filter(item => item.roles.includes(user?.role || ''));
@@ -91,11 +91,11 @@ export default function IndexPage() {
         action: 'Register Patient',
         path: '/register',
         color: 'primary',
-        roles: ['admin', 'doctor', 'nurse', 'clerk']
+        roles: ['system_admin', 'medical_officer', 'nursing_officer', 'front_desk']
       }
     ];
 
-    if (user?.role === 'admin') {
+    if (user?.role === 'system_admin') {
       cards.push(
         {
           title: 'Patient Management',
@@ -104,7 +104,7 @@ export default function IndexPage() {
           action: 'Manage Patients',
           path: '/admin/patients',
           color: 'secondary',
-          roles: ['admin']
+          roles: ['system_admin']
         },
         {
           title: 'System Audit',
@@ -113,7 +113,7 @@ export default function IndexPage() {
           action: 'View Audits',
           path: '/admin/audits',
           color: 'warning',
-          roles: ['admin']
+          roles: ['system_admin']
         }
       );
     }

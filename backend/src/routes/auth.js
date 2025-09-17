@@ -26,7 +26,7 @@ router.post('/register', async (req, res, next) => {
         const token = header.startsWith('Bearer ') ? header.slice(7) : null;
         const jwt = require('jsonwebtoken');
         const payload = jwt.verify(token, process.env.JWT_SECRET);
-        if (!payload || payload.role !== 'admin') {
+        if (!payload || payload.role !== 'system_admin') {
           return res.status(403).json({ error: 'Admin required' });
         }
       } catch {
