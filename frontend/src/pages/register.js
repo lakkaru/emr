@@ -27,6 +27,14 @@ import MedicationInput from '../components/MedicationInput';
 export default function RegisterPage() {
   const { token } = useAuth();
   const api = React.useMemo(() => apiClient(token), [token]);
+  
+  // Redirect to login if not authenticated
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && !token) {
+      window.location.href = '/login';
+    }
+  }, [token]);
+  
   const initialForm = {
     fullName: '', nickname: '', dob: '', gender: '', address: '', 
     phones: [{ type: 'mobile', number: '' }], email: '',

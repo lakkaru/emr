@@ -9,18 +9,27 @@ import {
   Menu as MenuIcon, Person as PersonIcon, PersonAdd as PersonAddIcon,
   Dashboard as DashboardIcon, Assignment as AssignmentIcon, Security as SecurityIcon,
   ExitToApp as LogoutIcon, LocalHospital as HospitalIcon, 
-  Assessment as AssessmentIcon, Groups as GroupsIcon
+  Assessment as AssessmentIcon, Groups as GroupsIcon, Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
+import { apiClient } from '../utils/api';
 
 const drawerWidth = 240;
 
 export default function IndexPage() {
   const { user, token, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [hasUsers, setHasUsers] = React.useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  React.useEffect(() => {
+    const api = apiClient();
+    api.get('/auth/has-users')
+      .then(r => setHasUsers(r.hasUsers))
+      .catch(() => setHasUsers(true));
+  }, []);
 
   const go = (path) => () => navigate(path);
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -47,9 +56,15 @@ export default function IndexPage() {
             <Button variant="contained" size="large" onClick={go('/login')}>
               Sign In
             </Button>
-            <Button variant="outlined" onClick={go('/setup')}>
-              First-time Setup
-            </Button>
+            {!hasUsers ? (
+              <Button variant="outlined" onClick={go('/setup')} startIcon={<SettingsIcon />}>
+                First-time Setup
+              </Button>
+            ) : (
+              <Button variant="outlined" onClick={go('/admin/profile')} startIcon={<PersonIcon />}>
+                Admin Profile
+              </Button>
+            )}
           </Stack>
         </Card>
       </Box>

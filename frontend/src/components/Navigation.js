@@ -1,4 +1,5 @@
 import React from 'react';
+import { navigate } from 'gatsby';
 import {
   Drawer,
   List,
@@ -51,9 +52,7 @@ export default function Navigation({
   };
 
   const handleNavigation = (path) => {
-    if (typeof window !== 'undefined') {
-      window.location.href = path;
-    }
+    navigate(path);
   };
 
   const handleBack = () => {
@@ -66,9 +65,7 @@ export default function Navigation({
 
   const handleLogout = () => {
     logout();
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
+    navigate('/login');
   };
 
   const drawer = (

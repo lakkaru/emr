@@ -35,6 +35,13 @@ export default function AdminProfilePage() {
   const { user, token } = useAuth();
   const api = React.useMemo(() => apiClient(token), [token]);
   
+  // Redirect to login if not authenticated
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && !token) {
+      window.location.href = '/login';
+    }
+  }, [token]);
+  
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   const [success, setSuccess] = React.useState('');
@@ -43,8 +50,8 @@ export default function AdminProfilePage() {
   
   // Profile form state
   const [profileForm, setProfileForm] = React.useState({
-    name: user?.name || '',
-    email: user?.email || ''
+    name: '',
+    email: ''
   });
   
   // Password change form state
@@ -53,6 +60,16 @@ export default function AdminProfilePage() {
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Populate form with user data when available
+  React.useEffect(() => {
+    if (user) {
+      setProfileForm({
+        name: user.name || '',
+        email: user.email || ''
+      });
+    }
+  }, [user]);
 
   const handleProfileSave = async () => {
     setLoading(true);
