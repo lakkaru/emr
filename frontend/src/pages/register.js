@@ -36,7 +36,7 @@ export default function RegisterPage() {
   }, [token]);
   
   const initialForm = {
-    fullName: '', nickname: '', dob: '', gender: '', address: '', 
+    fullName: '', nickname: '', nic: '', dob: '', gender: '', address: '', 
     phones: [{ type: 'mobile', number: '' }], email: '',
     insurance: { provider: '', memberId: '', groupNumber: '' },
     referral: { source: '', contact: '' },
@@ -155,6 +155,18 @@ export default function RegisterPage() {
                     value={form.nickname} 
                     onChange={onChange('nickname')} 
                     fullWidth 
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField 
+                    label="NIC Number" 
+                    value={form.nic} 
+                    onChange={onChange('nic')} 
+                    required 
+                    fullWidth 
+                    variant="outlined"
+                    placeholder="e.g., 200012345678 or 12345678901V"
+                    helperText="Enter National Identity Card number"
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>

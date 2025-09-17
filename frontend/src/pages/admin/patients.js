@@ -80,12 +80,14 @@ export default function AdminPatientsPage() {
         if (!patient) return false;
         
         const name = (patient.fullName || '').toLowerCase();
+        const nic = (patient.nic || '').toLowerCase();
         const phones = (patient.phones || []).map(p => p.number).join(' ').toLowerCase();
         const email = (patient.email || '').toLowerCase();
         const address = (patient.address || '').toLowerCase();
         const search = searchTerm.toLowerCase();
         
         return name.includes(search) || 
+               nic.includes(search) ||
                phones.includes(search) || 
                email.includes(search) ||
                address.includes(search);
@@ -200,6 +202,7 @@ export default function AdminPatientsPage() {
       const payload = {
         fullName: form.fullName?.trim() || '',
         nickname: form.nickname?.trim() || '',
+        nic: form.nic?.trim() || '',
         dob: (() => {
           try {
             if (!form.dob) return '';
@@ -426,7 +429,7 @@ export default function AdminPatientsPage() {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  placeholder="Search patients by name, phone, email, or address..."
+                  placeholder="Search patients by name, NIC, phone, email, or address..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
@@ -468,6 +471,7 @@ export default function AdminPatientsPage() {
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
                   <TableCell><strong>Patient</strong></TableCell>
+                  <TableCell><strong>NIC</strong></TableCell>
                   <TableCell><strong>Age</strong></TableCell>
                   <TableCell><strong>Contact</strong></TableCell>
                   <TableCell><strong>Address</strong></TableCell>
@@ -500,6 +504,11 @@ export default function AdminPatientsPage() {
                             )}
                           </Box>
                         </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontFamily="monospace">
+                          {patient.nic}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -650,6 +659,17 @@ export default function AdminPatientsPage() {
                           value={form.nickname || ''} 
                           onChange={(e) => setForm(f => ({ ...f, nickname: e.target.value }))} 
                           fullWidth 
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField 
+                          label="NIC Number" 
+                          value={form.nic || ''} 
+                          onChange={(e) => setForm(f => ({ ...f, nic: e.target.value }))} 
+                          fullWidth 
+                          required
+                          placeholder="e.g., 200012345678 or 12345678901V"
+                          helperText="Enter National Identity Card number"
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>

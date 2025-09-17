@@ -23,6 +23,7 @@ const PatientSchema = new mongoose.Schema({
   // I. Demographic and Contact
   fullName: { type: String, required: true, index: true },
   nickname: String,
+  nic: { type: String, required: true, unique: true, index: true },
   dob: { type: Date, required: true, index: true },
   gender: String,
   address: String,

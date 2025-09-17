@@ -37,9 +37,24 @@ router.get('/', requireRole(['admin', 'doctor', 'nurse', 'clerk']), async (req, 
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
     const skip = (page - 1) * limit;
+    const search = req.query.search?.trim();
+    
+    // Build search query
+    let query = {};
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      query = {
+        $or: [
+          { fullName: searchRegex },
+          { nic: searchRegex },
+          { 'phones.number': searchRegex }
+        ]
+      };
+    }
+    
     const [items, total] = await Promise.all([
-      Patient.find({}, { fullName: 1, dob: 1, phones: 1, gender: 1, address: 1, createdAt: 1 }).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Patient.countDocuments()
+      Patient.find(query, { fullName: 1, nic: 1, dob: 1, phones: 1, gender: 1, address: 1, createdAt: 1 }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Patient.countDocuments(query)
     ]);
     res.json({ items, page, limit, total });
   } catch (e) { next(e); }

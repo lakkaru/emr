@@ -15,6 +15,9 @@ const loginSchema = Joi.object({
 const patientSchema = Joi.object({
   fullName: Joi.string().min(1).required(),
   nickname: Joi.string().allow('', null),
+  nic: Joi.string().pattern(/^(?:\d{12}|\d{9}[vVxX])$/).required().messages({
+    'string.pattern.base': 'NIC must be either 12 digits (new format) or 9 digits followed by V/X (old format)'
+  }),
   dob: Joi.date().iso().required(),
   gender: Joi.string().allow('', null),
   address: Joi.string().allow('', null),
