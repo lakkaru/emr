@@ -31,6 +31,35 @@ export default function IndexPage() {
       .catch(() => setHasUsers(true));
   }, []);
 
+  // Redirect users to role-specific dashboards
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && token && user?.role) {
+      switch (user.role) {
+        case 'system_admin':
+          navigate('/admin/dashboard');
+          break;
+        case 'medical_officer':
+          navigate('/medical/dashboard');
+          break;
+        case 'front_desk':
+          navigate('/front-desk/dashboard');
+          break;
+        case 'nursing_officer':
+          navigate('/nursing/dashboard');
+          break;
+        case 'lab_officer':
+          navigate('/lab/dashboard');
+          break;
+        case 'pharmacy_officer':
+          navigate('/pharmacy/dashboard');
+          break;
+        default:
+          // Stay on main dashboard for unknown roles
+          break;
+      }
+    }
+  }, [token, user]);
+
   const go = (path) => () => navigate(path);
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 

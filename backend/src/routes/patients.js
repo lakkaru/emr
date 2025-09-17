@@ -14,7 +14,7 @@ function buildDedupeKey({ fullName, dob, phones }) {
 router.use(authRequired);
 
 // Create patient
-router.post('/', requireRole(['system_admin', 'medical_officer', 'nursing_officer', 'front_desk']), async (req, res, next) => {
+router.post('/', requireRole(['front_desk', 'medical_officer', 'nursing_officer']), async (req, res, next) => {
   try {
     const value = await patientSchema.validateAsync(req.body, { abortEarly: false });
     value.dedupeKey = buildDedupeKey(value);
@@ -32,7 +32,7 @@ router.post('/', requireRole(['system_admin', 'medical_officer', 'nursing_office
 });
 
 // List patients (basic pagination, minimal fields)
-router.get('/', requireRole(['system_admin', 'medical_officer', 'nursing_officer', 'front_desk', 'lab_officer', 'pharmacy_officer']), async (req, res, next) => {
+router.get('/', requireRole(['front_desk', 'medical_officer', 'nursing_officer', 'lab_officer', 'pharmacy_officer']), async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
@@ -61,7 +61,7 @@ router.get('/', requireRole(['system_admin', 'medical_officer', 'nursing_officer
 });
 
 // Duplicate check endpoint
-router.post('/check-duplicate', requireRole(['system_admin', 'medical_officer', 'nursing_officer', 'front_desk']), async (req, res, next) => {
+router.post('/check-duplicate', requireRole(['front_desk', 'medical_officer', 'nursing_officer']), async (req, res, next) => {
   try {
     const { fullName, dob, phones } = req.body || {};
     if (!fullName || !dob || !phones || phones.length === 0) return res.status(400).json({ error: 'Missing fields' });
@@ -73,7 +73,7 @@ router.post('/check-duplicate', requireRole(['system_admin', 'medical_officer', 
 });
 
 // Read single patient
-router.get('/:id', requireRole(['system_admin', 'medical_officer', 'nursing_officer', 'front_desk', 'lab_officer', 'pharmacy_officer']), async (req, res, next) => {
+router.get('/:id', requireRole(['front_desk', 'medical_officer', 'nursing_officer', 'lab_officer', 'pharmacy_officer']), async (req, res, next) => {
   try {
     const p = await Patient.findById(req.params.id);
     if (!p) return res.status(404).json({ error: 'Not found' });
@@ -82,7 +82,7 @@ router.get('/:id', requireRole(['system_admin', 'medical_officer', 'nursing_offi
 });
 
 // Update patient
-router.put('/:id', requireRole(['system_admin']), async (req, res, next) => {
+router.put('/:id', requireRole(['front_desk']), async (req, res, next) => {
   try {
     const value = await patientSchema.validateAsync(req.body, { abortEarly: false });
     value.dedupeKey = buildDedupeKey(value);

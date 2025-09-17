@@ -10,6 +10,7 @@ const { connectDB } = require('./utils/db');
 const authRoutes = require('./routes/auth');
 const patientRoutes = require('./routes/patients');
 const auditRoutes = require('./routes/audits');
+const usersRoutes = require('./routes/users');
 const allergyRoutes = require('./routes/allergies');
 const medicationRoutes = require('./routes/medications');
 
@@ -49,6 +50,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/audits', auditRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/allergies', allergyRoutes);
 app.use('/api/medications', medicationRoutes);
 

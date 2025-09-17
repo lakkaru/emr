@@ -8,8 +8,9 @@ yarn-error.log*
 
 # Env
 .env
-backend/.env
+backend/.env*
 frontend/.env*
+
 
 # Gatsby
 frontend/.cache/

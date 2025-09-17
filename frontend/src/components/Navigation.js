@@ -24,19 +24,56 @@ import {
   ArrowBack as BackIcon,
   LocalHospital as HospitalIcon,
   Logout as LogoutIcon,
-  AdminPanelSettings as AdminIcon
+  AdminPanelSettings as AdminIcon,
+  ManageAccounts as UserManagementIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { getRoleDisplayName } from '../utils/roles';
 
 const drawerWidth = 280;
 
-const navigationItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Register Patient', icon: <RegisterIcon />, path: '/register' },
-  { text: 'Patient Management', icon: <PatientsIcon />, path: '/admin/patients' },
-  { text: 'Admin Profile', icon: <AdminIcon />, path: '/admin/profile', adminOnly: true },
-];
+const getNavigationItems = (userRole) => {
+  const items = [];
+
+  if (userRole === 'system_admin') {
+    items.push(
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
+      { text: 'User Management', icon: <UserManagementIcon />, path: '/admin/users' },
+      { text: 'Admin Profile', icon: <AdminIcon />, path: '/admin/profile' }
+    );
+  } else if (userRole === 'front_desk') {
+    items.push(
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/front-desk/dashboard' },
+      { text: 'Register Patient', icon: <RegisterIcon />, path: '/register' },
+      { text: 'Patient Management', icon: <PatientsIcon />, path: '/admin/patients' }
+    );
+  } else if (userRole === 'medical_officer') {
+    items.push(
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/medical/dashboard' },
+      { text: 'Patient Records', icon: <PatientsIcon />, path: '/admin/patients' }
+    );
+  } else if (userRole === 'nursing_officer') {
+    items.push(
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/nursing/dashboard' },
+      { text: 'Patient Care', icon: <PatientsIcon />, path: '/admin/patients' }
+    );
+  } else if (userRole === 'lab_officer') {
+    items.push(
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/lab/dashboard' }
+    );
+  } else if (userRole === 'pharmacy_officer') {
+    items.push(
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/pharmacy/dashboard' }
+    );
+  } else {
+    // Default fallback
+    items.push(
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/' }
+    );
+  }
+
+  return items;
+};
 
 export default function Navigation({ 
   title = 'EMR System', 
@@ -112,9 +149,7 @@ export default function Navigation({
 
       {/* Navigation Items */}
       <List>
-        {navigationItems
-          .filter(item => !item.adminOnly || (item.adminOnly && user?.role === 'system_admin'))
-          .map((item) => (
+        {getNavigationItems(user?.role).map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               onClick={() => handleNavigation(item.path)}
