@@ -234,7 +234,12 @@ export default function AdminPatientsPage() {
         pastMedicalHistory: form.pastMedicalHistory?.trim() || '',
         problemList: cleanArrayData(form.problemList || []),
         immunizations: cleanArrayData(form.immunizations || []),
-        vitalsAtCheckIn: form.vitalsAtCheckIn || {}
+        vitalsAtCheckIn: {
+          temperatureC: form.vitalsAtCheckIn?.temperatureC ? Number(form.vitalsAtCheckIn.temperatureC) : null,
+          bloodPressure: form.vitalsAtCheckIn?.bloodPressure || null,
+          respiratoryRate: form.vitalsAtCheckIn?.respiratoryRate ? Number(form.vitalsAtCheckIn.respiratoryRate) : null,
+          pulse: form.vitalsAtCheckIn?.pulse ? Number(form.vitalsAtCheckIn.pulse) : null
+        }
       };
 
       console.log('Original form data:', form); // Debug log

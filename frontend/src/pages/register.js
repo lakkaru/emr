@@ -68,9 +68,13 @@ export default function RegisterPage() {
     setSuccess('');
     try {
       const payload = { ...form };
-      // Normalize numeric vitals
-      const vs = payload.vitalsAtCheckIn;
-      ['temperatureC','respiratoryRate','pulse'].forEach(k => { if (vs[k] === '') vs[k] = null; else vs[k] = Number(vs[k]); });
+      // Normalize numeric vitals - ensure proper data types
+      payload.vitalsAtCheckIn = {
+        temperatureC: payload.vitalsAtCheckIn?.temperatureC ? Number(payload.vitalsAtCheckIn.temperatureC) : null,
+        bloodPressure: payload.vitalsAtCheckIn?.bloodPressure || null,
+        respiratoryRate: payload.vitalsAtCheckIn?.respiratoryRate ? Number(payload.vitalsAtCheckIn.respiratoryRate) : null,
+        pulse: payload.vitalsAtCheckIn?.pulse ? Number(payload.vitalsAtCheckIn.pulse) : null
+      };
       if (!token) throw new Error('Please login');
       const created = await api.post('/patients', payload);
       setSuccess('Patient created');
@@ -95,9 +99,13 @@ export default function RegisterPage() {
     setSuccess('');
     try {
       const payload = { ...form };
-      // Normalize numeric vitals
-      const vs = payload.vitalsAtCheckIn;
-      ['temperatureC','respiratoryRate','pulse'].forEach(k => { if (vs[k] === '') vs[k] = null; else vs[k] = Number(vs[k]); });
+      // Normalize numeric vitals - ensure proper data types
+      payload.vitalsAtCheckIn = {
+        temperatureC: payload.vitalsAtCheckIn?.temperatureC ? Number(payload.vitalsAtCheckIn.temperatureC) : null,
+        bloodPressure: payload.vitalsAtCheckIn?.bloodPressure || null,
+        respiratoryRate: payload.vitalsAtCheckIn?.respiratoryRate ? Number(payload.vitalsAtCheckIn.respiratoryRate) : null,
+        pulse: payload.vitalsAtCheckIn?.pulse ? Number(payload.vitalsAtCheckIn.pulse) : null
+      };
       if (!token) throw new Error('Please login');
       const created = await api.post('/patients', payload);
       setShowSuccessDialog(true);
