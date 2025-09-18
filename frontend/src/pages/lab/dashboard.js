@@ -23,7 +23,9 @@ import {
   Schedule as ScheduleIcon,
   LocalHospital as HospitalIcon,
   Biotech as BiotechIcon,
-  Analytics as AnalyticsIcon
+  Analytics as AnalyticsIcon,
+  QrCodeScanner as BarcodeIcon,
+  Groups as GroupsIcon
 } from '@mui/icons-material';
 import Navigation from '../../components/Navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -31,20 +33,22 @@ import { navigate } from 'gatsby';
 import { apiClient } from '../../utils/api';
 
 export default function LabDashboard() {
-  const { user, token } = useAuth();
+  const { user, token, isLoading } = useAuth();
   const api = React.useMemo(() => apiClient(token), [token]);
   
   // Redirect if not lab officer
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && (!token || user?.role !== 'lab_officer')) {
+    if (typeof window !== 'undefined' && !isLoading && (!token || user?.role !== 'lab_officer')) {
       navigate('/login');
     }
-  }, [token, user]);
+  }, [token, user, isLoading]);
 
   const [stats, setStats] = React.useState({
     pendingTests: 0,
     completedToday: 0,
-    totalSamples: 0
+    totalSamples: 0,
+    overdueTests: 0,
+    urgentTests: 0
   });
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
@@ -52,11 +56,13 @@ export default function LabDashboard() {
   React.useEffect(() => {
     const loadDashboardStats = async () => {
       try {
-        // TODO: Implement lab-specific stats
+        const statsResponse = await api.get('/lab-tests/stats/dashboard');
         setStats({
-          pendingTests: 0,
-          completedToday: 0,
-          totalSamples: 0
+          pendingTests: statsResponse.pendingTests || 0,
+          completedToday: statsResponse.completedToday || 0,
+          totalSamples: statsResponse.totalSamples || 0,
+          overdueTests: statsResponse.overdueTests || 0,
+          urgentTests: statsResponse.urgentTests || 0
         });
       } catch (err) {
         setError('Failed to load dashboard statistics');
@@ -73,10 +79,19 @@ export default function LabDashboard() {
 
   const dashboardCards = [
     {
+      title: 'Barcode Scanner',
+      description: 'Scan patient barcodes to access lab tests',
+      icon: <BarcodeIcon sx={{ fontSize: 40 }} />,
+      color: 'primary',
+      action: 'Scan Barcode',
+      path: '/lab/barcode',
+      priority: 'high'
+    },
+    {
       title: 'Lab Tests',
       description: 'Manage and process lab tests',
       icon: <TestsIcon sx={{ fontSize: 40 }} />,
-      color: 'primary',
+      color: 'info',
       action: 'View Tests',
       path: '/lab/tests',
       priority: 'high'
@@ -112,6 +127,20 @@ export default function LabDashboard() {
 
   const quickActions = [
     {
+      title: 'Barcode Scanner',
+      description: 'Scan patient barcode to access lab tests',
+      icon: <BarcodeIcon />,
+      action: () => navigate('/lab/barcode'),
+      color: 'primary'
+    },
+    {
+      title: 'Patient Search',
+      description: 'Search patients to view their lab tests',
+      icon: <GroupsIcon />,
+      action: () => navigate('/lab/patients'),
+      color: 'info'
+    },
+    {
       title: 'Urgent Tests',
       description: 'Process urgent/STAT laboratory tests',
       icon: <BiotechIcon />,
@@ -126,6 +155,14 @@ export default function LabDashboard() {
       color: 'warning'
     }
   ];
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+        <Typography>Loading...</Typography>
+      </Container>
+    );
+  }
 
   if (!user || user.role !== 'lab_officer') {
     return null;
@@ -157,9 +194,9 @@ export default function LabDashboard() {
             Laboratory Overview
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <Box textAlign="center">
-                <Typography variant="h3" color="error.main" fontWeight="bold">
+                <Typography variant="h3" color="warning.main" fontWeight="bold">
                   {stats.pendingTests}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -167,7 +204,7 @@ export default function LabDashboard() {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <Box textAlign="center">
                 <Typography variant="h3" color="success.main" fontWeight="bold">
                   {stats.completedToday}
@@ -177,13 +214,23 @@ export default function LabDashboard() {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <Box textAlign="center">
-                <Typography variant="h3" color="info.main" fontWeight="bold">
-                  {stats.totalSamples}
+                <Typography variant="h3" color="error.main" fontWeight="bold">
+                  {stats.overdueTests}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Total Samples
+                  Overdue Tests
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Box textAlign="center">
+                <Typography variant="h3" color="info.main" fontWeight="bold">
+                  {stats.urgentTests}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Urgent Tests
                 </Typography>
               </Box>
             </Grid>

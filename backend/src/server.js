@@ -13,6 +13,7 @@ const auditRoutes = require('./routes/audits');
 const usersRoutes = require('./routes/users');
 const allergyRoutes = require('./routes/allergies');
 const medicationRoutes = require('./routes/medications');
+const labTestRoutes = require('./routes/labTests');
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api/audits', auditRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/allergies', allergyRoutes);
 app.use('/api/medications', medicationRoutes);
+app.use('/api/lab-tests', labTestRoutes);
 
 // Error handler (generic; avoid leaking details)
 // eslint-disable-next-line no-unused-vars

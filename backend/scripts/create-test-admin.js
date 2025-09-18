@@ -34,7 +34,7 @@ async function createTestAdmin() {
     console.log('🗑️ Cleared existing users');
     
     // Create test admin
-    const passwordHash = await bcrypt.hash('admin123', 12);
+    const passwordHash = await bcrypt.hash('Ad123456', 12);
     const admin = await User.create({
       employeeNumber: 'SYS001',
       username: 'admin',
@@ -46,11 +46,11 @@ async function createTestAdmin() {
     console.log('✅ Created test admin user:');
     console.log(`   Employee Number: ${admin.employeeNumber}`);
     console.log(`   Username: ${admin.username}`);
-    console.log(`   Password: admin123`);
+    console.log(`   Password: Ad123456`);
     console.log(`   Role: ${admin.role}`);
     
     // Create test front desk user
-    const frontDeskPasswordHash = await bcrypt.hash('frontdesk123', 12);
+    const frontDeskPasswordHash = await bcrypt.hash('Fr123456', 12);
     const frontDesk = await User.create({
       employeeNumber: 'FRD001',
       username: 'frontdesk01',
@@ -62,7 +62,7 @@ async function createTestAdmin() {
     console.log('✅ Created test front desk user:');
     console.log(`   Employee Number: ${frontDesk.employeeNumber}`);
     console.log(`   Username: ${frontDesk.username}`);
-    console.log(`   Password: frontdesk123`);
+    console.log(`   Password: Fr123456`);
     console.log(`   Role: ${frontDesk.role}`);
     
     console.log('\n🎉 Test users created successfully!');

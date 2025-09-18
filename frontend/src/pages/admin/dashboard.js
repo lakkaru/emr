@@ -31,15 +31,15 @@ import { navigate } from 'gatsby';
 import { apiClient } from '../../utils/api';
 
 export default function AdminDashboard() {
-  const { user, token } = useAuth();
+  const { user, token, isLoading } = useAuth();
   const api = React.useMemo(() => apiClient(token), [token]);
   
   // Redirect if not system admin
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && (!token || user?.role !== 'system_admin')) {
+    if (typeof window !== 'undefined' && !isLoading && (!token || user?.role !== 'system_admin')) {
       navigate('/login');
     }
-  }, [token, user]);
+  }, [token, user, isLoading]);
 
   const [stats, setStats] = React.useState({
     totalUsers: 0,
@@ -126,6 +126,14 @@ export default function AdminDashboard() {
       color: 'error'
     }
   ];
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+        <Typography>Loading...</Typography>
+      </Container>
+    );
+  }
 
   if (!user || user.role !== 'system_admin') {
     return null;

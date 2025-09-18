@@ -25,7 +25,9 @@ import {
   LocalHospital as HospitalIcon,
   Logout as LogoutIcon,
   AdminPanelSettings as AdminIcon,
-  ManageAccounts as UserManagementIcon
+  ManageAccounts as UserManagementIcon,
+  QrCodeScanner,
+  Science
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { getRoleDisplayName } from '../utils/roles';
@@ -50,7 +52,8 @@ const getNavigationItems = (userRole) => {
   } else if (userRole === 'medical_officer') {
     items.push(
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/medical/dashboard' },
-      { text: 'Patient Records', icon: <PatientsIcon />, path: '/admin/patients' }
+      { text: 'Patient Records', icon: <PatientsIcon />, path: '/admin/patients' },
+      { text: 'Lab Orders', icon: <Science />, path: '/medical/lab-orders' }
     );
   } else if (userRole === 'nursing_officer') {
     items.push(
@@ -59,7 +62,9 @@ const getNavigationItems = (userRole) => {
     );
   } else if (userRole === 'lab_officer') {
     items.push(
-      { text: 'Dashboard', icon: <DashboardIcon />, path: '/lab/dashboard' }
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/lab/dashboard' },
+      { text: 'Barcode Scanner', icon: <QrCodeScanner />, path: '/lab/barcode' },
+      { text: 'Patient Search', icon: <PatientsIcon />, path: '/lab/patients' }
     );
   } else if (userRole === 'pharmacy_officer') {
     items.push(

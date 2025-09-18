@@ -5,11 +5,11 @@ const User = require('../models/User');
 const { registerSchema, loginSchema } = require('../validators');
 const { authRequired, requireRole } = require('../middleware/auth');
 
-// First-user check: open registration only if no users exist; afterwards admin-only
+// First-user check: open registration only if no admin users exist; afterwards admin-only
 router.get('/has-users', async (req, res, next) => {
   try {
-    const count = await User.estimatedDocumentCount();
-    res.json({ hasUsers: count > 0 });
+    const adminCount = await User.countDocuments({ role: 'system_admin' });
+    res.json({ hasUsers: adminCount > 0 });
   } catch (e) { next(e); }
 });
 
@@ -24,8 +24,8 @@ router.post('/register', async (req, res, next) => {
     const existingUsername = await User.findOne({ username: value.username });
     if (existingUsername) return res.status(409).json({ error: 'Username already in use' });
     
-    const count = await User.estimatedDocumentCount();
-    if (count > 0) {
+    const adminCount = await User.countDocuments({ role: 'system_admin' });
+    if (adminCount > 0) {
       // require admin auth for subsequent registrations
       try {
         const header = req.headers.authorization || '';

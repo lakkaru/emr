@@ -23,7 +23,8 @@ import {
   Description as PrescriptionIcon,
   Psychology as DiagnosisIcon,
   Schedule as ScheduleIcon,
-  Groups as PatientsIcon
+  Groups as PatientsIcon,
+  Science as LabIcon
 } from '@mui/icons-material';
 import Navigation from '../../components/Navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -31,15 +32,15 @@ import { navigate } from 'gatsby';
 import { apiClient } from '../../utils/api';
 
 export default function MedicalOfficerDashboard() {
-  const { user, token } = useAuth();
+  const { user, token, isLoading } = useAuth();
   const api = React.useMemo(() => apiClient(token), [token]);
   
   // Redirect if not medical officer
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && (!token || user?.role !== 'medical_officer')) {
+    if (typeof window !== 'undefined' && !isLoading && (!token || user?.role !== 'medical_officer')) {
       navigate('/login');
     }
-  }, [token, user]);
+  }, [token, user, isLoading]);
 
   const [stats, setStats] = React.useState({
     todayAppointments: 0,
@@ -108,6 +109,15 @@ export default function MedicalOfficerDashboard() {
       action: 'View Vitals',
       path: '/medical/vitals',
       priority: 'medium'
+    },
+    {
+      title: 'Lab Tests',
+      description: 'Order laboratory tests for patients',
+      icon: <LabIcon sx={{ fontSize: 40 }} />,
+      color: 'secondary',
+      action: 'Order Tests',
+      path: '/medical/lab-orders',
+      priority: 'high'
     }
   ];
 
@@ -127,6 +137,14 @@ export default function MedicalOfficerDashboard() {
       color: 'info'
     }
   ];
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+        <Typography>Loading...</Typography>
+      </Container>
+    );
+  }
 
   if (!user || user.role !== 'medical_officer') {
     return null;
