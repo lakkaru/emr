@@ -29,7 +29,8 @@ import {
   Security as SecurityIcon,
   Healing as HealingIcon,
   MonitorHeart as MonitorHeartIcon,
-  LocalHospital as LocalHospitalIcon
+  LocalHospital as LocalHospitalIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
@@ -313,6 +314,93 @@ export default function AdminPatientsPage() {
   const handleCloseView = () => {
     setViewOpen(false);
     setViewPatient(null);
+  };
+
+  const handlePrintPatientBarcode = (patient) => {
+    if (!patient) return;
+    
+    // Create printable barcode content
+    const printContent = `
+      <html>
+        <head>
+          <title>Patient Barcode - ${patient.fullName}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              text-align: center; 
+              padding: 20px;
+              margin: 0;
+            }
+            .barcode-card {
+              border: 2px solid #333;
+              padding: 20px;
+              margin: 20px auto;
+              width: 300px;
+              background: white;
+            }
+            .patient-name {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            .patient-id {
+              font-size: 24px;
+              font-weight: bold;
+              letter-spacing: 2px;
+              background: #f0f0f0;
+              padding: 10px;
+              margin: 10px 0;
+              border: 1px solid #ccc;
+            }
+            .barcode-display {
+              font-family: 'Courier New', monospace;
+              font-size: 14px;
+              background: #f8f8f8;
+              padding: 15px;
+              border: 1px solid #ddd;
+              margin: 10px 0;
+            }
+            .instructions {
+              font-size: 12px;
+              color: #666;
+              margin-top: 15px;
+            }
+            .patient-info {
+              font-size: 12px;
+              color: #444;
+              margin-top: 10px;
+              border-top: 1px solid #ddd;
+              padding-top: 10px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="barcode-card">
+            <div class="patient-name">${patient.fullName}</div>
+            <div class="patient-id">ID: ${patient._id}</div>
+            <div class="barcode-display">
+              ${patient._id}
+            </div>
+            <div class="patient-info">
+              DOB: ${formatDate(patient.dob)}<br>
+              Gender: ${patient.gender || 'Not specified'}<br>
+              NIC: ${patient.nic || 'Not provided'}
+            </div>
+            <div class="instructions">
+              Present this ID for check-in<br>
+              Keep this card safe
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    // Open print dialog
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   const formatDate = (dateString) => {
@@ -1230,23 +1318,35 @@ export default function AdminPatientsPage() {
             )}
           </DialogContent>
           
-          <DialogActions sx={{ p: 3, bgcolor: 'grey.50' }}>
-            <Button 
-              onClick={() => {
-                handleCloseView();
-                openEdit(viewPatient._id);
-              }}
-              variant="outlined"
-              startIcon={<EditIcon />}
-            >
-              Edit Patient
-            </Button>
-            <Button 
-              onClick={handleCloseView}
-              variant="contained"
-            >
-              Close
-            </Button>
+          <DialogActions sx={{ p: 3, bgcolor: 'grey.50', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Button 
+                onClick={() => handlePrintPatientBarcode(viewPatient)}
+                variant="contained"
+                color="primary"
+                startIcon={<PrintIcon />}
+              >
+                Print Patient Barcode
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Button 
+                onClick={() => {
+                  handleCloseView();
+                  openEdit(viewPatient._id);
+                }}
+                variant="outlined"
+                startIcon={<EditIcon />}
+              >
+                Edit Patient
+              </Button>
+              <Button 
+                onClick={handleCloseView}
+                variant="contained"
+              >
+                Close
+              </Button>
+            </Box>
           </DialogActions>
         </Dialog>
         </Container>

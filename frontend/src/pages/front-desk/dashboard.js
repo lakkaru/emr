@@ -23,7 +23,8 @@ import {
   Receipt as ReceiptIcon,
   Assignment as AssignmentIcon,
   Phone as PhoneIcon,
-  Event as EventIcon
+  Event as EventIcon,
+  QrCodeScanner as BarcodeIcon
 } from '@mui/icons-material';
 import Navigation from '../../components/Navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -90,41 +91,16 @@ export default function FrontDeskDashboard() {
       action: 'Search Patients',
       path: '/admin/patients',
       priority: 'high'
-    },
-    {
-      title: 'Appointments',
-      description: 'Schedule and manage patient appointments',
-      icon: <ScheduleIcon sx={{ fontSize: 40 }} />,
-      color: 'info',
-      action: 'View Schedule',
-      path: '/appointments',
-      priority: 'medium'
-    },
-    {
-      title: 'Reports',
-      description: 'Generate front desk and patient reports',
-      icon: <AssignmentIcon sx={{ fontSize: 40 }} />,
-      color: 'warning',
-      action: 'View Reports',
-      path: '/front-desk/reports',
-      priority: 'medium'
     }
   ];
 
   const quickActions = [
     {
-      title: 'Patient Check-in',
-      description: 'Check-in existing patients for appointments',
-      icon: <EventIcon />,
-      action: () => navigate('/checkin'),
+      title: 'Barcode Check-in',
+      description: 'Scan patient barcode for quick check-in',
+      icon: <BarcodeIcon />,
+      action: () => navigate('/checkin/barcode'),
       color: 'success'
-    },
-    {
-      title: 'New Appointment',
-      description: 'Schedule new patient appointment',
-      icon: <ScheduleIcon />,
-      action: () => navigate('/appointments/new'),
-      color: 'info'
     }
   ];
 

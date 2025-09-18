@@ -15,7 +15,8 @@ import {
   CheckCircle as CheckIcon,
   Healing as MedicalIcon,
   Security as InsuranceIcon,
-  MonitorHeart as VitalsIcon
+  MonitorHeart as VitalsIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
 import { MenuItem } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
@@ -86,11 +87,88 @@ export default function RegisterPage() {
   };
 
   const [showSuccessDialog, setShowSuccessDialog] = React.useState(false);
+  const [createdPatient, setCreatedPatient] = React.useState(null);
 
   const handleSuccessClose = () => {
     setShowSuccessDialog(false);
+    setCreatedPatient(null);
     setForm(initialForm);
     setDuplicate(null);
+  };
+
+  const handlePrintBarcode = () => {
+    if (!createdPatient) return;
+    
+    // Create printable barcode content
+    const printContent = `
+      <html>
+        <head>
+          <title>Patient Barcode - ${createdPatient.fullName}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              text-align: center; 
+              padding: 20px;
+              margin: 0;
+            }
+            .barcode-card {
+              border: 2px solid #333;
+              padding: 20px;
+              margin: 20px auto;
+              width: 300px;
+              background: white;
+            }
+            .patient-name {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            .patient-id {
+              font-size: 24px;
+              font-weight: bold;
+              letter-spacing: 2px;
+              background: #f0f0f0;
+              padding: 10px;
+              margin: 10px 0;
+              border: 1px solid #ccc;
+            }
+            .barcode-display {
+              font-family: 'Courier New', monospace;
+              font-size: 14px;
+              background: #f8f8f8;
+              padding: 15px;
+              border: 1px solid #ddd;
+              margin: 10px 0;
+            }
+            .instructions {
+              font-size: 12px;
+              color: #666;
+              margin-top: 15px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="barcode-card">
+            <div class="patient-name">${createdPatient.fullName}</div>
+            <div class="patient-id">ID: ${createdPatient._id}</div>
+            <div class="barcode-display">
+              ${createdPatient._id}
+            </div>
+            <div class="instructions">
+              Present this ID for check-in<br>
+              Keep this card safe
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    // Open print dialog
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   const modifiedSubmit = async (e) => {
@@ -108,6 +186,7 @@ export default function RegisterPage() {
       };
       if (!token) throw new Error('Please login');
       const created = await api.post('/patients', payload);
+      setCreatedPatient(created.data);
       setShowSuccessDialog(true);
     } catch (e) {
       setError(e.message);
@@ -467,19 +546,45 @@ export default function RegisterPage() {
           </DialogTitle>
           <DialogContent sx={{ textAlign: 'center', py: 3 }}>
             <Typography variant="body1" gutterBottom>
-              <strong>{form.fullName}</strong> has been successfully registered in the EMR system.
+              <strong>{createdPatient?.fullName || form.fullName}</strong> has been successfully registered in the EMR system.
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" gutterBottom>
               Patient information has been securely stored and is ready for medical care.
             </Typography>
+            {createdPatient && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Patient ID:
+                </Typography>
+                <Typography variant="h6" sx={{ fontFamily: 'monospace', letterSpacing: 1 }}>
+                  {createdPatient._id}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  This ID can be used for quick check-in via barcode scanning
+                </Typography>
+              </Box>
+            )}
           </DialogContent>
-          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-            <Button variant="contained" onClick={handleSuccessClose} size="large">
-              Register Another Patient
-            </Button>
-            <Button variant="outlined" onClick={() => window.location.href = '/'}>
-              Return to Dashboard
-            </Button>
+          <DialogActions sx={{ justifyContent: 'center', pb: 3, flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Button 
+                variant="contained" 
+                color="primary"
+                onClick={handlePrintBarcode}
+                startIcon={<PrintIcon />}
+                size="large"
+              >
+                Print Patient Barcode
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Button variant="contained" onClick={handleSuccessClose} size="large">
+                Register Another Patient
+              </Button>
+              <Button variant="outlined" onClick={() => window.location.href = '/'}>
+                Return to Dashboard
+              </Button>
+            </Box>
           </DialogActions>
         </Dialog>
         </Container>
