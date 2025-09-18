@@ -1,14 +1,17 @@
 const Joi = require('joi');
 
 const registerSchema = Joi.object({
-  email: Joi.string().email().required(),
+  employeeNumber: Joi.string().min(3).max(20).required(),
+  username: Joi.string().min(3).max(30).pattern(/^[a-zA-Z0-9_]+$/).required().messages({
+    'string.pattern.base': 'Username can only contain letters, numbers, and underscores'
+  }),
   name: Joi.string().min(2).required(),
   password: Joi.string().min(8).max(128).required(),
   role: Joi.string().valid('system_admin', 'medical_officer', 'nursing_officer', 'front_desk', 'lab_officer', 'pharmacy_officer').default('front_desk')
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
+  username: Joi.string().min(3).required(),
   password: Joi.string().min(8).required()
 });
 

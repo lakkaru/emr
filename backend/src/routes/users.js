@@ -30,10 +30,16 @@ router.post('/', async (req, res, next) => {
   try {
     const value = await registerSchema.validateAsync(req.body, { abortEarly: false });
     
-    // Check if email already exists
-    const existing = await User.findOne({ email: value.email });
-    if (existing) {
-      return res.status(409).json({ error: 'Email already in use' });
+    // Check if employee number already exists
+    const existingEmployee = await User.findOne({ employeeNumber: value.employeeNumber });
+    if (existingEmployee) {
+      return res.status(409).json({ error: 'Employee number already in use' });
+    }
+    
+    // Check if username already exists
+    const existingUsername = await User.findOne({ username: value.username });
+    if (existingUsername) {
+      return res.status(409).json({ error: 'Username already in use' });
     }
     
     // Prevent creating another system_admin unless explicitly allowed
@@ -44,7 +50,8 @@ router.post('/', async (req, res, next) => {
     // Hash password and create user
     const passwordHash = await bcrypt.hash(value.password, 12);
     const user = await User.create({ 
-      email: value.email, 
+      employeeNumber: value.employeeNumber,
+      username: value.username, 
       name: value.name, 
       role: value.role, 
       passwordHash 
@@ -52,7 +59,7 @@ router.post('/', async (req, res, next) => {
     
     // Audit log
     await audit('create', 'User', user._id.toString(), req, { 
-      fields: ['name', 'email', 'role'] 
+      fields: ['name', 'employeeNumber', 'username', 'role'] 
     });
     
     // Return user without password hash
@@ -78,10 +85,10 @@ router.get('/:id', async (req, res, next) => {
 // Update user (admin only)
 router.put('/:id', async (req, res, next) => {
   try {
-    const { name, email, role } = req.body;
+    const { name, employeeNumber, username, role } = req.body;
     
-    if (!name || !email || !role) {
-      return res.status(400).json({ error: 'Name, email, and role are required' });
+    if (!name || !employeeNumber || !username || !role) {
+      return res.status(400).json({ error: 'Name, employee number, username, and role are required' });
     }
     
     // Prevent role changes to/from system_admin
@@ -94,20 +101,30 @@ router.put('/:id', async (req, res, next) => {
       return res.status(403).json({ error: 'Cannot modify system administrator roles' });
     }
     
-    // Check if email is already in use by another user
-    const emailExists = await User.findOne({ 
-      email: email.toLowerCase(), 
+    // Check if employee number is already in use by another user
+    const employeeExists = await User.findOne({ 
+      employeeNumber: employeeNumber, 
       _id: { $ne: req.params.id } 
     });
-    if (emailExists) {
-      return res.status(409).json({ error: 'Email already in use by another user' });
+    if (employeeExists) {
+      return res.status(409).json({ error: 'Employee number already in use by another user' });
+    }
+    
+    // Check if username is already in use by another user
+    const usernameExists = await User.findOne({ 
+      username: username.toLowerCase(), 
+      _id: { $ne: req.params.id } 
+    });
+    if (usernameExists) {
+      return res.status(409).json({ error: 'Username already in use by another user' });
     }
     
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { 
         name: name.trim(), 
-        email: email.trim().toLowerCase(), 
+        employeeNumber: employeeNumber.trim(),
+        username: username.trim().toLowerCase(), 
         role 
       },
       { new: true, select: '-passwordHash' }
@@ -115,7 +132,7 @@ router.put('/:id', async (req, res, next) => {
     
     // Audit log
     await audit('update', 'User', updatedUser._id.toString(), req, { 
-      fields: ['name', 'email', 'role'] 
+      fields: ['name', 'employeeNumber', 'username', 'role'] 
     });
     
     res.json(updatedUser);
@@ -144,7 +161,7 @@ router.delete('/:id', async (req, res, next) => {
     
     // Audit log
     await audit('delete', 'User', req.params.id, req, { 
-      fields: ['name', 'email', 'role'] 
+      fields: ['name', 'employeeNumber', 'username', 'role'] 
     });
     
     res.json({ message: 'User deleted successfully' });
@@ -175,7 +192,7 @@ router.put('/:id/reset-password', async (req, res, next) => {
     
     // Audit log
     await audit('password_reset', 'User', req.params.id, req, { 
-      fields: ['name', 'email'] 
+      fields: ['name', 'employeeNumber', 'username'] 
     });
     
     res.json({ message: 'Password reset successfully' });

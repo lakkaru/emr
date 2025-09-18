@@ -51,7 +51,7 @@ export default function AdminProfilePage() {
   // Profile form state
   const [profileForm, setProfileForm] = React.useState({
     name: '',
-    email: ''
+    username: ''
   });
   
   // Password change form state
@@ -66,7 +66,7 @@ export default function AdminProfilePage() {
     if (user) {
       setProfileForm({
         name: user.name || '',
-        email: user.email || ''
+        username: user.username || ''
       });
     }
   }, [user]);
@@ -126,7 +126,7 @@ export default function AdminProfilePage() {
   const handleCancelEdit = () => {
     setProfileForm({
       name: user?.name || '',
-      email: user?.email || ''
+      username: user?.username || ''
     });
     setEditMode(false);
     setError('');
@@ -193,13 +193,22 @@ export default function AdminProfilePage() {
                       />
                       
                       <TextField
-                        label="Email Address"
-                        value={profileForm.email}
-                        onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
+                        label="Employee Number"
+                        value={user?.employeeNumber || ''}
+                        disabled
+                        fullWidth
+                        helperText="Employee number cannot be changed"
+                      />
+                      
+                      <TextField
+                        label="Username"
+                        value={profileForm.username}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, username: e.target.value }))}
                         disabled={!editMode}
                         fullWidth
                         required
-                        type="email"
+                        helperText="Username for system login"
+                        inputProps={{ pattern: '[a-zA-Z0-9_]+' }}
                       />
                       
                       <TextField

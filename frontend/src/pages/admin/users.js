@@ -77,7 +77,8 @@ export default function UserManagementPage() {
   // Form state
   const [form, setForm] = React.useState({
     name: '',
-    email: '',
+    employeeNumber: '',
+    username: '',
     role: 'front_desk',
     password: ''
   });
@@ -107,7 +108,8 @@ export default function UserManagementPage() {
       setEditingUser(userToEdit);
       setForm({
         name: userToEdit.name,
-        email: userToEdit.email,
+        employeeNumber: userToEdit.employeeNumber,
+        username: userToEdit.username,
         role: userToEdit.role,
         password: ''
       });
@@ -115,7 +117,8 @@ export default function UserManagementPage() {
       setEditingUser(null);
       setForm({
         name: '',
-        email: '',
+        employeeNumber: '',
+        username: '',
         role: 'front_desk',
         password: ''
       });
@@ -139,7 +142,8 @@ export default function UserManagementPage() {
         // Update existing user
         await api.put(`/users/${editingUser._id}`, {
           name: form.name,
-          email: form.email,
+          employeeNumber: form.employeeNumber,
+          username: form.username,
           role: form.role
         });
         setSuccess('User updated successfully');
@@ -164,12 +168,15 @@ export default function UserManagementPage() {
     if (!userToDelete) return;
     
     try {
-      await api.delete(`/users/${userToDelete._id}`);
+      console.log('Attempting to delete user:', userToDelete._id);
+      const response = await api.delete(`/users/${userToDelete._id}`);
+      console.log('Delete response:', response);
       setSuccess('User deleted successfully');
       setDeleteConfirmOpen(false);
       setUserToDelete(null);
       loadUsers();
     } catch (err) {
+      console.error('Delete error:', err);
       setError(err.message);
     }
   };
@@ -243,9 +250,9 @@ export default function UserManagementPage() {
               <Table>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.50' }}>
-                    <TableCell><strong>User</strong></TableCell>
+                    <TableCell><strong>Employee</strong></TableCell>
                     <TableCell><strong>Role</strong></TableCell>
-                    <TableCell><strong>Email</strong></TableCell>
+                    <TableCell><strong>Username</strong></TableCell>
                     <TableCell><strong>Joined</strong></TableCell>
                     <TableCell><strong>Actions</strong></TableCell>
                   </TableRow>
@@ -263,7 +270,7 @@ export default function UserManagementPage() {
                               {userItem.name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              ID: {userItem._id.slice(-6)}
+                              Emp: {userItem.employeeNumber}
                             </Typography>
                           </Box>
                         </Box>
@@ -276,7 +283,11 @@ export default function UserManagementPage() {
                           size="small"
                         />
                       </TableCell>
-                      <TableCell>{userItem.email}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                          {userItem.username}
+                        </Typography>
+                      </TableCell>
                       <TableCell>
                         {new Date(userItem.createdAt).toLocaleDateString()}
                       </TableCell>
@@ -361,14 +372,27 @@ export default function UserManagementPage() {
                   required
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Email Address"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  label="Employee Number"
+                  value={form.employeeNumber}
+                  onChange={(e) => setForm({ ...form, employeeNumber: e.target.value })}
                   fullWidth
                   required
+                  placeholder="e.g., MED001"
+                  helperText="Unique employee identification"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Username"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  fullWidth
+                  required
+                  placeholder="e.g., johndoe"
+                  helperText="Login username (letters, numbers, underscore only)"
+                  inputProps={{ pattern: '[a-zA-Z0-9_]+' }}
                 />
               </Grid>
               <Grid item xs={12}>

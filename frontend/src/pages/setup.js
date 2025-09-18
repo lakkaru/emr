@@ -15,7 +15,8 @@ export default function SetupPage() {
   const api = apiClient();
   const [hasUsers, setHasUsers] = React.useState(true);
   const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
+  const [employeeNumber, setEmployeeNumber] = React.useState('');
+  const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
   const [success, setSuccess] = React.useState('');
@@ -37,7 +38,13 @@ export default function SetupPage() {
     setLoading(true);
     try {
       if (hasUsers) throw new Error('Users already exist. Go to login.');
-      const res = await api.post('/auth/register', { name, email, password, role: 'system_admin' });
+      const res = await api.post('/auth/register', { 
+        name, 
+        employeeNumber, 
+        username, 
+        password, 
+        role: 'system_admin' 
+      });
       setSuccess('Admin account created successfully! Redirecting to login...');
       setTimeout(() => (window.location.href = '/login'), 2000);
     } catch (e) {
@@ -91,7 +98,8 @@ export default function SetupPage() {
               </Box>
               <Typography variant="body2" color="info.dark">
                 Welcome! This appears to be the first time accessing the EMR system. 
-                Please create the initial administrator account to get started.
+                Please create the initial administrator account with employee credentials.
+                All system users are hospital employees with assigned employee numbers and usernames.
               </Typography>
             </Paper>
 
@@ -112,15 +120,25 @@ export default function SetupPage() {
                 helperText="Enter the administrator's full name"
               />
               <TextField 
-                label="Email Address" 
-                type="email" 
-                value={email} 
-                onChange={e=>setEmail(e.target.value)} 
+                label="Employee Number" 
+                value={employeeNumber} 
+                onChange={e=>setEmployeeNumber(e.target.value)} 
                 required 
                 fullWidth 
                 variant="outlined"
-                placeholder="admin@hospital.com"
-                helperText="This will be used for system login"
+                placeholder="SYS001"
+                helperText="Enter unique employee identification number"
+              />
+              <TextField 
+                label="Username" 
+                value={username} 
+                onChange={e=>setUsername(e.target.value)} 
+                required 
+                fullWidth 
+                variant="outlined"
+                placeholder="admin"
+                helperText="This will be used for system login (letters, numbers, underscore only)"
+                inputProps={{ pattern: '[a-zA-Z0-9_]+' }}
               />
               <TextField 
                 label="Password" 
@@ -130,8 +148,8 @@ export default function SetupPage() {
                 required 
                 fullWidth 
                 variant="outlined"
-                helperText="Choose a strong password (minimum 6 characters)"
-                inputProps={{ minLength: 6 }}
+                helperText="Choose a strong password (minimum 8 characters)"
+                inputProps={{ minLength: 8 }}
               />
               
               {error && (

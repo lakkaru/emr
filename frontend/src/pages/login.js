@@ -9,7 +9,7 @@ import { apiClient } from '../utils/api';
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [email, setEmail] = React.useState('');
+  const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -26,7 +26,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const api = apiClient();
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { username, password });
       login(res.token, res.user);
       if (typeof window !== 'undefined') window.location.href = '/';
     } catch (e) {
@@ -68,14 +68,16 @@ export default function LoginPage() {
 
             <Box component="form" onSubmit={onSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField 
-                label="Email Address" 
-                type="email" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
+                label="Username" 
+                type="text" 
+                value={username} 
+                onChange={e => setUsername(e.target.value)} 
                 required 
                 fullWidth 
                 variant="outlined"
-                autoComplete="email"
+                autoComplete="username"
+                placeholder="Enter your username"
+                helperText="Use your employee username to sign in"
               />
               <TextField 
                 label="Password" 
@@ -118,10 +120,11 @@ export default function LoginPage() {
             )}
 
             {hasUsers && (
-              <Paper sx={{ mt: 3, p: 2, bgcolor: 'warning.light', color: 'warning.contrastText' }}>
+              <Paper sx={{ mt: 3, p: 2, bgcolor: 'info.light', color: 'info.contrastText' }}>
                 <Typography variant="body2" sx={{ textAlign: 'center' }}>
-                  <strong>Need help?</strong><br />
-                  Contact your system administrator for account access
+                  <strong>Employee Login</strong><br />
+                  Use your assigned username and password.<br />
+                  Contact your system administrator for assistance.
                 </Typography>
               </Paper>
             )}
