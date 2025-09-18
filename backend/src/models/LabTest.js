@@ -120,7 +120,6 @@ const LabTestSchema = new mongoose.Schema({
 
 // Indexes for better query performance
 LabTestSchema.index({ patient: 1, status: 1 });
-LabTestSchema.index({ testCode: 1 });
 LabTestSchema.index({ orderedBy: 1, createdAt: -1 });
 LabTestSchema.index({ processedBy: 1, status: 1 });
 LabTestSchema.index({ createdAt: -1 });
