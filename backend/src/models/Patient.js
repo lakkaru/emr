@@ -26,6 +26,12 @@ const PatientSchema = new mongoose.Schema({
   nic: { type: String, required: true, unique: true, index: true },
   dob: { type: Date, required: true, index: true },
   gender: String,
+  bloodGroup: { 
+    type: String, 
+    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''], 
+    default: '',
+    index: true 
+  },
   address: String,
   phones: [{ 
     type: { type: String, enum: ['mobile', 'home', 'work'], default: 'mobile' },

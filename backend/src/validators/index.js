@@ -23,6 +23,7 @@ const patientSchema = Joi.object({
   }),
   dob: Joi.date().iso().required(),
   gender: Joi.string().allow('', null),
+  bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', '').allow('', null),
   address: Joi.string().allow('', null),
   phones: Joi.array().items(Joi.object({
     type: Joi.string().valid('mobile', 'home', 'work').default('mobile'),

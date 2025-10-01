@@ -138,6 +138,7 @@ export default function AdminPatientsPage() {
         fullName: p.fullName || '',
         nickname: p.nickname || '',
         gender: p.gender || '',
+        bloodGroup: p.bloodGroup || '',
         phones: p.phones && p.phones.length > 0 ? p.phones : [{ type: 'mobile', number: '' }],
         email: p.email || '',
         address: p.address || '',
@@ -216,6 +217,7 @@ export default function AdminPatientsPage() {
           }
         })(),
         gender: form.gender || '',
+        bloodGroup: form.bloodGroup || '',
         phones: cleanArrayData(form.phones || [{ type: 'mobile', number: '' }]).map(phone => ({
           type: phone.type || 'mobile',
           number: phone.number?.trim() || ''
@@ -798,6 +800,27 @@ export default function AdminPatientsPage() {
                         </TextField>
                       </Grid>
                       <Grid item xs={12} sm={6}>
+                        <TextField 
+                          select
+                          label="Blood Group" 
+                          value={form.bloodGroup || ''} 
+                          onChange={(e) => setForm(f => ({ ...f, bloodGroup: e.target.value }))} 
+                          fullWidth
+                          placeholder="Select Blood Group"
+                          helperText="Important for medical emergencies"
+                        >
+                          <MenuItem value="">Select Blood Group</MenuItem>
+                          <MenuItem value="A+">A+ (A Positive)</MenuItem>
+                          <MenuItem value="A-">A- (A Negative)</MenuItem>
+                          <MenuItem value="B+">B+ (B Positive)</MenuItem>
+                          <MenuItem value="B-">B- (B Negative)</MenuItem>
+                          <MenuItem value="AB+">AB+ (AB Positive)</MenuItem>
+                          <MenuItem value="AB-">AB- (AB Negative)</MenuItem>
+                          <MenuItem value="O+">O+ (O Positive)</MenuItem>
+                          <MenuItem value="O-">O- (O Negative)</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
                         <Box>
                           <Typography variant="subtitle2" gutterBottom>
                             Phone Numbers *
@@ -1097,6 +1120,22 @@ export default function AdminPatientsPage() {
                       <Grid item xs={12} sm={4}>
                         <Typography variant="subtitle2" color="primary">Gender</Typography>
                         <Typography variant="body1">{viewPatient.gender || 'Not specified'}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Typography variant="subtitle2" color="primary">Blood Group</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: viewPatient.bloodGroup ? 'error.main' : 'text.secondary' }}>
+                            {viewPatient.bloodGroup || 'Not specified'}
+                          </Typography>
+                          {viewPatient.bloodGroup && (
+                            <Chip 
+                              label="Critical Info" 
+                              size="small" 
+                              color="error" 
+                              variant="outlined"
+                            />
+                          )}
+                        </Box>
                       </Grid>
                       <Grid item xs={12} sm={4}>
                         <Typography variant="subtitle2" color="primary">Email</Typography>

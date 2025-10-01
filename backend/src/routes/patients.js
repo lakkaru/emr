@@ -53,7 +53,7 @@ router.get('/', requireRole(['front_desk', 'medical_officer', 'nursing_officer',
     }
     
     const [items, total] = await Promise.all([
-      Patient.find(query, { fullName: 1, nic: 1, dob: 1, phones: 1, gender: 1, address: 1, createdAt: 1 }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Patient.find(query, { fullName: 1, nic: 1, dob: 1, phones: 1, gender: 1, bloodGroup: 1, address: 1, createdAt: 1 }).sort({ createdAt: -1 }).skip(skip).limit(limit),
       Patient.countDocuments(query)
     ]);
     res.json({ items, page, limit, total });

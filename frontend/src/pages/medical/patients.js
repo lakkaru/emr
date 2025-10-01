@@ -586,6 +586,15 @@ export default function MedicalPatientSearch() {
                               size="small" 
                               color={patient.gender === 'male' ? 'primary' : 'secondary'} 
                             />
+                            {patient.bloodGroup && (
+                              <Chip 
+                                label={`${patient.bloodGroup}`}
+                                size="small" 
+                                color="error"
+                                variant="outlined"
+                                sx={{ fontWeight: 'bold' }}
+                              />
+                            )}
                           </Box>
                         }
                         secondary={

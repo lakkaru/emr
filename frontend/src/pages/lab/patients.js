@@ -282,9 +282,20 @@ export default function LabPatientSearch() {
                       </ListItemAvatar>
                       <ListItemText
                         primary={
-                          <Typography variant="h6">
-                            {patient.fullName}
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="h6">
+                              {patient.fullName}
+                            </Typography>
+                            {patient.bloodGroup && (
+                              <Chip 
+                                label={`${patient.bloodGroup}`}
+                                size="small" 
+                                color="error"
+                                variant="filled"
+                                sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
+                              />
+                            )}
+                          </Box>
                         }
                         secondary={
                           <Stack spacing={0.5}>

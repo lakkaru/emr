@@ -37,7 +37,7 @@ export default function RegisterPage() {
   }, [token]);
   
   const initialForm = {
-    fullName: '', nickname: '', nic: '', dob: '', gender: '', address: '', 
+    fullName: '', nickname: '', nic: '', dob: '', gender: '', bloodGroup: '', address: '', 
     phones: [{ type: 'mobile', number: '' }], email: '',
     insurance: { provider: '', memberId: '', groupNumber: '' },
     referral: { source: '', contact: '' },
@@ -278,6 +278,26 @@ export default function RegisterPage() {
                     <MenuItem value="Female">Female</MenuItem>
                     <MenuItem value="Other">Other</MenuItem>
                     <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField 
+                    select
+                    label="Blood Group" 
+                    value={form.bloodGroup} 
+                    onChange={onChange('bloodGroup')} 
+                    fullWidth
+                    helperText="Important for medical emergencies"
+                  >
+                    <MenuItem value="">Select Blood Group</MenuItem>
+                    <MenuItem value="A+">A+ (A Positive)</MenuItem>
+                    <MenuItem value="A-">A- (A Negative)</MenuItem>
+                    <MenuItem value="B+">B+ (B Positive)</MenuItem>
+                    <MenuItem value="B-">B- (B Negative)</MenuItem>
+                    <MenuItem value="AB+">AB+ (AB Positive)</MenuItem>
+                    <MenuItem value="AB-">AB- (AB Negative)</MenuItem>
+                    <MenuItem value="O+">O+ (O Positive)</MenuItem>
+                    <MenuItem value="O-">O- (O Negative)</MenuItem>
                   </TextField>
                 </Grid>
                 <Grid item xs={12}>
