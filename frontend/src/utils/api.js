@@ -25,6 +25,9 @@ export function apiClient(token) {
     put: (p, body, options = {}) => {
       const requestBody = body instanceof FormData ? body : JSON.stringify(body);
       return request(p, { method: 'PUT', body: requestBody, ...options });
+    },
+    delete: (p, options = {}) => {
+      return request(p, { method: 'DELETE', ...options });
     }
   };
 }

@@ -271,12 +271,15 @@ router.put('/:id', authRequired, requireRole(['system_admin', 'medical_officer']
   try {
     const { id } = req.params;
     const {
+      medications,
+      generalInstructions,
+      status,
+      // Backward compatibility for old format
       medication,
       dosage,
       frequency,
       duration,
-      instructions,
-      status
+      instructions
     } = req.body;
 
     const prescription = await Prescription.findById(id);
@@ -290,12 +293,49 @@ router.put('/:id', authRequired, requireRole(['system_admin', 'medical_officer']
     }
 
     const updates = {};
-    if (medication !== undefined) updates.medication = medication;
-    if (dosage !== undefined) updates.dosage = dosage;
-    if (frequency !== undefined) updates.frequency = frequency;
-    if (duration !== undefined) updates.duration = duration;
-    if (instructions !== undefined) updates.instructions = instructions;
-    if (status !== undefined) updates.status = status;
+    
+    // Handle new medications array format
+    if (medications !== undefined) {
+      // Validate medications array
+      if (!Array.isArray(medications) || medications.length === 0) {
+        return res.status(400).json({ error: 'At least one medication is required' });
+      }
+      
+      // Validate each medication
+      for (const med of medications) {
+        if (!med.name || !med.dosage || !med.frequency || !med.duration) {
+          return res.status(400).json({ error: 'All medication fields (name, dosage, frequency, duration) are required' });
+        }
+      }
+      
+      updates.medications = medications;
+    }
+    
+    // Handle general instructions
+    if (generalInstructions !== undefined) {
+      updates.generalInstructions = generalInstructions;
+    }
+    
+    // Handle status updates
+    if (status !== undefined) {
+      updates.status = status;
+    }
+    
+    // Backward compatibility for old single medication format
+    if (medication !== undefined && !medications) {
+      updates.medications = [{
+        name: medication,
+        dosage: dosage || '',
+        frequency: frequency || '',
+        duration: duration || '',
+        instructions: instructions || ''
+      }];
+    }
+    
+    // Handle old instructions field (map to generalInstructions if no medications array)
+    if (instructions !== undefined && !medications && !generalInstructions) {
+      updates.generalInstructions = instructions;
+    }
 
     const updatedPrescription = await Prescription.findByIdAndUpdate(
       id,
@@ -343,13 +383,20 @@ router.put('/:id/cancel', authRequired, requireRole(['system_admin', 'medical_of
 });
 
 // Delete prescription
-router.delete('/:id', authRequired, requireRole(['system_admin']), async (req, res, next) => {
+router.delete('/:id', authRequired, requireRole(['system_admin', 'medical_officer']), async (req, res, next) => {
   try {
-    const prescription = await Prescription.findByIdAndDelete(req.params.id);
+    const prescription = await Prescription.findById(req.params.id);
     
     if (!prescription) {
       return res.status(404).json({ error: 'Prescription not found' });
     }
+
+    // Only allow the original doctor or admin to delete
+    if (req.user.role !== 'system_admin' && prescription.doctor.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to delete this prescription' });
+    }
+
+    await Prescription.findByIdAndDelete(req.params.id);
 
     res.json({ message: 'Prescription deleted successfully' });
   } catch (error) {

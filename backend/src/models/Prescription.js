@@ -34,6 +34,10 @@ const PrescriptionSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    mealTiming: {
+      type: String,
+      default: 'No specific timing'
+    },
     instructions: {
       type: String,
       default: ''
