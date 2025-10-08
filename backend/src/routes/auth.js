@@ -69,7 +69,8 @@ router.post('/login', async (req, res, next) => {
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
     user.lastLoginAt = new Date();
     await user.save();
-    const token = jwt.sign({ id: user._id.toString(), role: user.role, name: user.name }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
+  // Default expiry: 8 hours (can be overridden with JWT_EXPIRES_IN environment variable)
+  const token = jwt.sign({ id: user._id.toString(), role: user.role, name: user.name }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '8h' });
     return res.json({ 
       token, 
       user: { 

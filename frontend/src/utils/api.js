@@ -1,3 +1,12 @@
+class UnauthorizedError extends Error {
+  constructor(message = 'Unauthorized') {
+    super(message);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+export { UnauthorizedError };
+
 export function apiClient(token) {
   const base = process.env.GATSBY_API_BASE || '/api';
   async function request(path, opts = {}) {
@@ -11,7 +20,11 @@ export function apiClient(token) {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch(`${base}${path}`, { ...opts, headers });
     if (!res.ok) {
+      // Try to parse error body
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        throw new UnauthorizedError(data.error || 'Unauthorized');
+      }
       throw new Error(data.error || `Request failed: ${res.status}`);
     }
     return res.json();

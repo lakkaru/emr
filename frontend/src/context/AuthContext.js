@@ -28,6 +28,28 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Install a light global fetch wrapper to dispatch an event on 401 responses.
+  useEffect(() => {
+    if (!window || !window.fetch) return undefined;
+    const originalFetch = window.fetch.bind(window);
+    const wrapped = async (...args) => {
+      const res = await originalFetch(...args);
+      if (res.status === 401) {
+        try {
+          const detail = await res.json().catch(() => ({}));
+          window.dispatchEvent(new CustomEvent('api:unauthorized', { detail }));
+        } catch (e) {
+          window.dispatchEvent(new CustomEvent('api:unauthorized', { detail: {} }));
+        }
+      }
+      return res;
+    };
+    window.fetch = wrapped;
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
   const login = (t, u) => {
     setToken(t);
     setUser(u);
@@ -42,9 +64,31 @@ export function AuthProvider({ children }) {
     window.localStorage.removeItem('auth_user');
   };
 
-  // Auto logout on inactivity (e.g., 15 minutes)
+  // Listen for global unauthorized events and logout the user
   useEffect(() => {
-    const INACTIVITY_MS = 15 * 60 * 1000;
+    const onUnauthorized = (e) => {
+      console.warn('API returned 401, logging out user');
+      logout();
+      // Optionally show a friendly message
+      try { window.alert('Session expired or unauthorized. You have been logged out. Please login again.'); } catch (e) {}
+    };
+    window.addEventListener('api:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('api:unauthorized', onUnauthorized);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto logout on inactivity. Make timeout configurable via GATSBY_INACTIVITY_MINUTES (minutes).
+  // Set to 0 to disable auto-logout.
+  useEffect(() => {
+    const envVal = parseInt(process.env.GATSBY_INACTIVITY_MINUTES, 10);
+    const minutes = Number.isFinite(envVal) && envVal >= 0 ? envVal : 15; // default 15 minutes
+
+    if (minutes === 0) {
+      // Auto-logout disabled
+      return undefined;
+    }
+
+    const INACTIVITY_MS = minutes * 60 * 1000;
     const reset = () => {
       if (idleTimer) clearTimeout(idleTimer);
       setIdleTimer(setTimeout(() => {
